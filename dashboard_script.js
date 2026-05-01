@@ -36,20 +36,20 @@ const FISH_NORM=(function(){
     'orata g':'Orata G','orate g':'Orata G',
     // Pancasio / Pangasio
     'pancasio':'Pangasio','pangasio':'Pangasio',
+    // Persico
+    'persico':'Filetto Persico','filetto persico':'Filetto Persico',
     // Pesce spada
     'pesce spada':'Pesce Spada',
     // Pescatrice
     'pescatrici':'Pescatrice','pescatrice':'Pescatrice',
-    // Polpo / Polpi / Polipo → Polpo
-    'polpo':'Polpo','polpi':'Polpo','polipo':'Polpo',
     'polpo t7':'Polpo T7','polpo  t7':'Polpo T7','polpo t4':'Polpo T4',
     'polpo t8':'Polpo T8','polpi t8':'Polpo T8','polipi t8':'Polpo T8',
+    // Polpo / Polpi / Polipo → Polpo
+    'polpo':'Polpo','polpi':'Polpo','polipo':'Polpo',
     // Raia / Raya / Razza
     'raia':'Razza','raya':'Razza','razza':'Razza',
     // Sarde
     'sarde':'Sarde',
-    // Scampi
-    'scampi':'Scampi',
     // Seppia / Seppie — tutte Seppia (singolare canonico)
     'seppia':'Seppia','seppie':'Seppia',
     'seppia 10/20':'Seppia Pulita 10/20','seppia cioco':'Seppia Cioco',
@@ -280,10 +280,20 @@ function agg(data){
   const mp=il>0?inn/il*100:0;
   const bf={};
   data.forEach(r=>{
-    if(!bf[r.psc])bf[r.psc]={n:r.psc,cat:r.cat,il:0,inn:0,sp:0,qv:0,sc:0,rim:0};
-    const b=bf[r.psc];b.il+=r.il;b.inn+=r.inn;b.sp+=r.sp;b.qv+=r.qv;b.sc+=r.sc;b.rim+=r.rim;
+    if(!bf[r.psc])bf[r.psc]={n:r.psc,cat:r.cat,il:0,inn:0,sp:0,qv:0,sc:0,rim:0,
+      _qa_pa:0,_qa_pv:0,_qa_tot:0}; // per medie ponderate
+    const b=bf[r.psc];
+    b.il+=r.il;b.inn+=r.inn;b.sp+=r.sp;b.qv+=r.qv;b.sc+=r.sc;b.rim+=r.rim;
+    b._qa_pa+=r.qa*r.pa;  // somma qa*pa per media ponderata
+    b._qa_pv+=r.qa*r.pv;  // somma qa*pv per media ponderata
+    b._qa_tot+=r.qa;       // somma qa totale
   });
-  const fa=Object.values(bf).map(f=>({...f,mp:f.il>0?f.inn/f.il*100:0})).sort((a,b)=>b.mp-a.mp);
+  const fa=Object.values(bf).map(f=>({
+    ...f,
+    mp:f.il>0?f.inn/f.il*100:0,
+    pa_w:f._qa_tot>0?f._qa_pa/f._qa_tot:0,  // prezzo acquisto medio ponderato
+    pv_w:f._qa_tot>0?f._qa_pv/f._qa_tot:0,  // prezzo vendita medio ponderato
+  })).sort((a,b)=>b.mp-a.mp);
   return{il,inn,sp,qv,sc,rim,snv,mp,fish:fa};
 }
 
@@ -787,7 +797,8 @@ function renderTable(a){
     {key:'il',label:'Incasso \u20ac',fmt:v=>fmt(v,0,'\u20ac '),num:true},
     {key:'inn',label:'Margine \u20ac',fmt:v=>'<span style="color:'+(v>=0?'#10b981':'#ef4444')+';font-weight:600;">'+fmt(v,0,'\u20ac ')+'</span>',num:true},
     {key:'mp',label:'Margine %',fmt:v=>'<span style="color:'+mpColor(v)+';font-weight:600;">'+v.toFixed(1)+'%</span>',num:true},
-    {key:'roi',label:'ROI %',fmt:(v,r)=>'<span style="color:'+mpColor(r.mp)+';font-weight:600;">'+r.mp.toFixed(1)+'%</span>',num:true},
+    {key:'pa_w',label:'Pa medio \u20ac/kg',fmt:v=>fmt(v,2,'\u20ac '),num:true},
+    {key:'pv_w',label:'Pv medio \u20ac/kg',fmt:v=>fmt(v,2,'\u20ac '),num:true},
     {key:'qv',label:'Kg venduti',fmt:v=>v.toFixed(1),num:true},
     {key:'sc',label:'Scarto kg',fmt:v=>v.toFixed(1),num:true},
     {key:'rim',label:'Rimanenza kg',fmt:v=>v.toFixed(1),num:true},

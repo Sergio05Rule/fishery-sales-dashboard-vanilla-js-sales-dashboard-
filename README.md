@@ -205,6 +205,7 @@ The dataset contained **118 unique fish names** across all records. The `FISH_NO
 | `Orata`, `Orate`, `Orata a`, `Orate a` | `Orata A` |
 | `Orata g`, `Orate g` | `Orata G` |
 | `Pancasio`, `Pangasio` | `Pangasio` |
+| `Persico`, `Filetto persico` | `Filetto Persico` |
 | `Pesce spada` | `Pesce Spada` |
 | `Pescatrice`, `Pescatrici` | `Pescatrice` |
 | `Polpi`, `Polpo`, `Polipo` | `Polpo` |
@@ -248,7 +249,6 @@ The dataset contained **118 unique fish names** across all records. The `FISH_NO
 | `Cefalo` | `Cefalo` |
 | `Cicala` | `Cicala` |
 | `Datterino` | `Datterino` |
-| `Filetto persico` | `Filetto Persico` |
 | `Filetto ricomposto` | `Filetto Ricomposto` |
 | `Gallinella` | `Gallinella` |
 | `Lanzardo` | `Lanzardo` |
@@ -258,8 +258,7 @@ The dataset contained **118 unique fish names** across all records. The `FISH_NO
 | `Ostriche` | `Ostriche` |
 | `Palombo` | `Palombo` |
 | `Paranza` | `Paranza` |
-| `Persico` | `Persico` |
-| `Ricciola` | `Ricciola` |
+| `Persico` | `Persico` || `Ricciola` | `Ricciola` |
 | `Ricomposto` | `Ricomposto` |
 | `Salmone` | `Salmone` |
 | `Sbani` | `Sbani` |
