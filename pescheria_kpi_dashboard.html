@@ -89,6 +89,14 @@ select:focus{border-color:#3b82f6;box-shadow:0 0 0 2px rgba(59,130,246,.12);}
 
 .footer{font-size:9px;color:#9ca3af;margin-top:10px;padding:6px 0;}
 
+/* Collapsible sections */
+.section-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;padding:0;text-align:left;}
+.section-toggle:hover .stl{color:#2563eb;}
+.section-arrow{font-size:12px;color:#9ca3af;transition:transform .2s;flex-shrink:0;}
+.section-arrow.open{transform:rotate(90deg);}
+.section-body{overflow:hidden;transition:max-height .3s ease;max-height:0;}
+.section-body.open{max-height:9999px;}
+
 @media(max-width:900px){
   .kg{grid-template-columns:repeat(3,1fr);}
   .hrow{grid-template-columns:repeat(2,1fr);}
@@ -163,106 +171,108 @@ select:focus{border-color:#3b82f6;box-shadow:0 0 0 2px rgba(59,130,246,.12);}
 
 <!-- SEZIONE ACTUAL vs FISH RECORD -->
 <div class="card" id="actualSection" style="display:none;">
-  <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap;">
-    <div class="stl" style="margin-bottom:0;">Actual vs Fish Record</div>
-    <span style="font-size:10px;color:#6b7280;background:#f0fdf4;padding:2px 8px;border-radius:4px;border:1px solid #86efac;">
-      Dataset 2 caricato
-    </span>
-    <span style="font-size:10px;color:#6b7280;">Join key: Data + Pescheria</span>
-  </div>
-
-  <!-- Filtri Actual -->
-  <div style="display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-bottom:10px;padding:8px;background:#f9fafb;border-radius:8px;">
-    <span class="cg-lbl">Tipo Spesa:</span><select id="fTipo" style="font-size:11px;padding:3px 6px;border:1px solid #d1d5db;border-radius:5px;"><option value="tutti">Tutti</option></select>
-    <span class="cg-lbl">Dettaglio A:</span><select id="fDetA" style="font-size:11px;padding:3px 6px;border:1px solid #d1d5db;border-radius:5px;"><option value="tutti">Tutti</option></select>
-    <span class="cg-lbl">Dettaglio B:</span><select id="fDetB" style="font-size:11px;padding:3px 6px;border:1px solid #d1d5db;border-radius:5px;"><option value="tutti">Tutti</option></select>
-  </div>
-
-  <!-- KPI confronto -->
-  <div id="actualKpi" class="kg" style="margin-bottom:10px;"></div>
-
-  <!-- Grafici confronto -->
-  <div class="charts3" style="margin-bottom:8px;">
-    <div class="card" style="padding:12px;">
-      <div class="stl">Incasso lordo: Fish Record vs Actual (per giornata)</div>
-      <div style="position:relative;height:220px;"><canvas id="actRevChart"></canvas></div>
+  <button class="section-toggle" onclick="toggleSection('actualBody','actualArrow')">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span class="stl" style="margin-bottom:0;">📊 Actual vs Fish Record</span>
+      <span style="font-size:10px;color:#6b7280;background:#f0fdf4;padding:2px 8px;border-radius:4px;border:1px solid #86efac;" id="actualBadge">Dataset 2 caricato</span>
     </div>
-    <div class="card" style="padding:12px;">
-      <div class="stl">Spese fornitori: Fish Record vs Actual</div>
-      <div style="position:relative;height:220px;"><canvas id="actFornChart"></canvas></div>
+    <span class="section-arrow" id="actualArrow">▶</span>
+  </button>
+  <div class="section-body" id="actualBody">
+    <div style="height:10px;"></div>
+    <!-- Filtri Actual -->
+    <div style="display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-bottom:10px;padding:8px;background:#f9fafb;border-radius:8px;">
+      <span class="cg-lbl">Tipo Spesa:</span><select id="fTipo" style="font-size:11px;padding:3px 6px;border:1px solid #d1d5db;border-radius:5px;"><option value="tutti">Tutti</option></select>
+      <span class="cg-lbl">Dettaglio A:</span><select id="fDetA" style="font-size:11px;padding:3px 6px;border:1px solid #d1d5db;border-radius:5px;"><option value="tutti">Tutti</option></select>
+      <span class="cg-lbl">Dettaglio B:</span><select id="fDetB" style="font-size:11px;padding:3px 6px;border:1px solid #d1d5db;border-radius:5px;"><option value="tutti">Tutti</option></select>
     </div>
-  </div>
-  <div class="charts3" style="margin-bottom:8px;">
-    <div class="card" style="padding:12px;">
-      <div class="stl">Margine netto: Fish Record vs Actual (€)</div>
-      <div style="position:relative;height:220px;"><canvas id="actNettoChart"></canvas></div>
+    <!-- KPI confronto -->
+    <div id="actualKpi" class="kg" style="margin-bottom:10px;"></div>
+    <!-- Grafici confronto -->
+    <div class="charts3" style="margin-bottom:8px;">
+      <div class="card" style="padding:12px;">
+        <div class="stl">Incasso lordo: Fish Record vs Actual (per giornata)</div>
+        <div style="position:relative;height:220px;"><canvas id="actRevChart"></canvas></div>
+      </div>
+      <div class="card" style="padding:12px;">
+        <div class="stl">Spese fornitori: Fish Record vs Actual</div>
+        <div style="position:relative;height:220px;"><canvas id="actFornChart"></canvas></div>
+      </div>
     </div>
-    <div class="card" style="padding:12px;">
-      <div class="stl">Margine %: Fish Record vs Actual</div>
-      <div style="position:relative;height:220px;"><canvas id="actMargChart"></canvas></div>
+    <div class="charts3" style="margin-bottom:8px;">
+      <div class="card" style="padding:12px;">
+        <div class="stl">Margine netto: Fish Record vs Actual (€)</div>
+        <div style="position:relative;height:220px;"><canvas id="actNettoChart"></canvas></div>
+      </div>
+      <div class="card" style="padding:12px;">
+        <div class="stl">Margine %: Fish Record vs Actual</div>
+        <div style="position:relative;height:220px;"><canvas id="actMargChart"></canvas></div>
+      </div>
     </div>
-  </div>
-
-  <!-- Spese extra (solo Actual) -->
-  <div class="card" style="padding:12px;margin-bottom:8px;">
-    <div class="stl">Spese extra (benzina, altro) — solo Dataset Actual</div>
-    <div style="position:relative;height:180px;"><canvas id="actSpeseChart"></canvas></div>
-  </div>
-
-  <!-- Tabella dettaglio -->
-  <div style="overflow-x:auto;">
-    <table class="dtbl" id="actTable"></table>
+    <div class="card" style="padding:12px;margin-bottom:8px;">
+      <div class="stl">Spese extra (benzina, altro) — solo Dataset Actual</div>
+      <div style="position:relative;height:180px;"><canvas id="actSpeseChart"></canvas></div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="dtbl" id="actTable"></table>
+    </div>
   </div>
 </div>
 
 <!-- ANALISI PRE/POST 10/02/2026 -->
 <div class="card" id="prepostSection">
-  <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap;">
-    <div class="stl" style="margin-bottom:0;">Analisi cambio gestione giorni · Pre/Post 10/02/2026</div>
-    <span style="font-size:10px;color:#6b7280;background:#f3f4f6;padding:2px 8px;border-radius:4px;">
+  <button class="section-toggle" onclick="toggleSection('prepostBody','prepostArrow')">
+    <span class="stl" style="margin-bottom:0;">📅 Analisi cambio gestione giorni · Pre/Post 10/02/2026</span>
+    <span class="section-arrow" id="prepostArrow">▶</span>
+  </button>
+  <div class="section-body" id="prepostBody">
+    <div style="height:10px;"></div>
+    <div style="font-size:10px;color:#6b7280;background:#f3f4f6;padding:6px 10px;border-radius:6px;margin-bottom:10px;">
       Pre: Lun+Mer+Ven entrambe · Post: Gio=Grottole, Ven=Grassano, Lun=Grassano, Mar=Grottole, Mer=Grassano
-    </span>
-  </div>
-  <!-- Riga 1: Revenue per giorno per pescheria (pre vs post) -->
-  <div class="charts3" style="margin-bottom:8px;">
-    <div style="background:#f9fafb;border-radius:8px;padding:12px;">
-      <div class="stl">Incasso lordo medio per giornata · per giorno (Pre)</div>
-      <div style="position:relative;height:200px;"><canvas id="ppRevPre"></canvas></div>
     </div>
-    <div style="background:#f9fafb;border-radius:8px;padding:12px;">
-      <div class="stl">Incasso lordo medio per giornata · per giorno (Post)</div>
-      <div style="position:relative;height:200px;"><canvas id="ppRevPost"></canvas></div>
+    <div class="charts3" style="margin-bottom:8px;">
+      <div style="background:#f9fafb;border-radius:8px;padding:12px;">
+        <div class="stl">Incasso lordo medio per giornata · per giorno (Pre)</div>
+        <div style="position:relative;height:200px;"><canvas id="ppRevPre"></canvas></div>
+      </div>
+      <div style="background:#f9fafb;border-radius:8px;padding:12px;">
+        <div class="stl">Incasso lordo medio per giornata · per giorno (Post)</div>
+        <div style="position:relative;height:200px;"><canvas id="ppRevPost"></canvas></div>
+      </div>
     </div>
-  </div>
-  <!-- Riga 2: Margine % per giorno per pescheria (pre vs post) -->
-  <div class="charts3" style="margin-bottom:8px;">
-    <div style="background:#f9fafb;border-radius:8px;padding:12px;">
-      <div class="stl">Margine % per giorno · Pre vs Post (Grassano)</div>
-      <div style="position:relative;height:200px;"><canvas id="ppMargGrassano"></canvas></div>
+    <div class="charts3" style="margin-bottom:8px;">
+      <div style="background:#f9fafb;border-radius:8px;padding:12px;">
+        <div class="stl">Margine % per giorno · Pre vs Post (Grassano)</div>
+        <div style="position:relative;height:200px;"><canvas id="ppMargGrassano"></canvas></div>
+      </div>
+      <div style="background:#f9fafb;border-radius:8px;padding:12px;">
+        <div class="stl">Margine % per giorno · Pre vs Post (Grottole)</div>
+        <div style="position:relative;height:200px;"><canvas id="ppMargGrottole"></canvas></div>
+      </div>
     </div>
-    <div style="background:#f9fafb;border-radius:8px;padding:12px;">
-      <div class="stl">Margine % per giorno · Pre vs Post (Grottole)</div>
-      <div style="position:relative;height:200px;"><canvas id="ppMargGrottole"></canvas></div>
+    <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:8px;">
+      <div class="stl">Volume (kg/giornata) vs Margine % · Pre (●) vs Post (▲) · per pescheria+giorno</div>
+      <div style="position:relative;height:260px;"><canvas id="ppScatter"></canvas></div>
     </div>
-  </div>
-  <!-- Riga 3: Scatter volume vs margine pre/post -->
-  <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:8px;">
-    <div class="stl">Volume (kg/giornata) vs Margine % · Pre (●) vs Post (▲) · per pescheria+giorno</div>
-    <div style="position:relative;height:260px;"><canvas id="ppScatter"></canvas></div>
-  </div>
-  <!-- Riga 4: Tabella riepilogo -->
-  <div style="overflow-x:auto;">
-    <table class="dtbl" id="ppTable"></table>
+    <div style="overflow-x:auto;">
+      <table class="dtbl" id="ppTable"></table>
+    </div>
   </div>
 </div>
 
 <div class="card">
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
-    <div class="stl" style="margin-bottom:0;">Dati grezzi (righe visibili)</div>
-    <span id="rawCount" style="font-size:10px;color:#9ca3af;"></span>
-  </div>
-  <div style="overflow-x:auto;max-height:340px;overflow-y:auto;">
-    <table class="dtbl" id="rawTbl"></table>
+  <button class="section-toggle" onclick="toggleSection('rawBody','rawArrow')">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span class="stl" style="margin-bottom:0;">🗃 Dati grezzi (righe visibili)</span>
+      <span id="rawCount" style="font-size:10px;color:#9ca3af;"></span>
+    </div>
+    <span class="section-arrow" id="rawArrow">▶</span>
+  </button>
+  <div class="section-body" id="rawBody">
+    <div style="height:8px;"></div>
+    <div style="overflow-x:auto;max-height:340px;overflow-y:auto;">
+      <table class="dtbl" id="rawTbl"></table>
+    </div>
   </div>
 </div>
 

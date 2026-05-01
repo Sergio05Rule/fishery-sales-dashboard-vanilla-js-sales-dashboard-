@@ -935,6 +935,23 @@ function renderRawTable(data){
 }
 
 // ============================================================
+// COLLAPSIBLE SECTIONS
+// ============================================================
+function toggleSection(bodyId,arrowId){
+  const body=document.getElementById(bodyId);
+  const arrow=document.getElementById(arrowId);
+  if(!body||!arrow)return;
+  const isOpen=body.classList.contains('open');
+  body.classList.toggle('open',!isOpen);
+  arrow.classList.toggle('open',!isOpen);
+  arrow.textContent=isOpen?'▶':'▼';
+  // Se si apre la sezione actual e ci sono dati, ridisegna i grafici
+  // (Chart.js non disegna correttamente su canvas nascosti)
+  if(!isOpen&&bodyId==='actualBody'&&RAW2.length)renderActual();
+  if(!isOpen&&bodyId==='prepostBody')renderPrePost();
+}
+
+// ============================================================
 // DATASET 2 — Actual (cassa reale)
 // ============================================================
 let RAW2=[];
@@ -1514,4 +1531,17 @@ document.getElementById('csvIn').addEventListener('change',e=>{
     .catch(()=>{
       document.getElementById('loadMsg').innerHTML='Caricamento automatico non disponibile \u2014 usa <b>\uD83D\uDCC2 Carica CSV</b> per selezionare il file.';
     });
+  // Autoload Dataset 2
+  const fname2='Pescheria - Abasci\u00e0 Excel - Lavoro - Entrate_Uscite.csv';
+  fetch(encodeURIComponent(fname2))
+    .then(r=>{if(!r.ok)throw new Error(r.status);return r.text();})
+    .then(text=>{
+      RAW2=buildFromCSV2(text);
+      if(!RAW2.length)return;
+      document.getElementById('loadMsg2').innerHTML='<span style="color:#166534;background:#f0fdf4;padding:2px 8px;border-radius:4px;">Dataset Actual caricato: '+RAW2.length+' righe</span>';
+      const sec=document.getElementById('actualSection');
+      if(sec)sec.style.display='';
+      populateActualFilters();
+    })
+    .catch(()=>{}); // silenzioso se non trovato, si usa il bottone manuale
 })();
