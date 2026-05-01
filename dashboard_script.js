@@ -196,7 +196,7 @@ function buildFromCSV(text){
 // ============================================================
 const $anno=document.getElementById('fAnno'),$mese=document.getElementById('fMese'),
       $sett=document.getElementById('fSett'),$pesch=document.getElementById('fPesch'),
-      $forn=document.getElementById('fForn');
+      $forn=document.getElementById('fForn'),$giorno=document.getElementById('fGiorno');
 
 (function applyMultiSelectStyles(){
   [{el:$anno,w:'100px'},{el:$mese,w:'120px'},{el:$sett,w:'110px'},{el:$pesch,w:'120px'},{el:$forn,w:'110px'}].forEach(({el,w})=>{
@@ -204,6 +204,10 @@ const $anno=document.getElementById('fAnno'),$mese=document.getElementById('fMes
     el.setAttribute('size','4');
     el.style.cssText='min-width:'+w+';max-width:180px;border:1px solid #d1d5db;border-radius:6px;background:#fff;color:#1a1a1a;font-size:11px;padding:2px 4px;outline:none;cursor:pointer;';
   });
+  // Giorno settimana: select singolo (7 opzioni fisse, non multi)
+  $giorno.style.cssText='min-width:110px;border:1px solid #d1d5db;border-radius:6px;background:#fff;color:#1a1a1a;font-size:11px;padding:4px 6px;outline:none;cursor:pointer;';
+  const giorni=[['tutti','Tutti'],['1','Lunedì'],['2','Martedì'],['3','Mercoledì'],['4','Giovedì'],['5','Venerdì'],['6','Sabato'],['0','Domenica']];
+  $giorno.innerHTML=giorni.map(([v,l])=>'<option value="'+v+'">'+l+'</option>').join('');
   const hint=document.createElement('div');
   hint.style.cssText='font-size:9px;color:#9ca3af;margin-top:2px;width:100%;';
   hint.textContent='Ctrl+click per pi\u00f9 selezioni';
@@ -249,6 +253,7 @@ $mese.addEventListener('change',()=>{updateSettOpts();crossFilter=null;render();
 $sett.addEventListener('change',()=>{crossFilter=null;render();});
 $pesch.addEventListener('change',()=>{crossFilter=null;render();});
 $forn.addEventListener('change',()=>{crossFilter=null;render();});
+$giorno.addEventListener('change',()=>{crossFilter=null;render();});
 
 // ============================================================
 // DATA ACCESS
@@ -260,6 +265,7 @@ function getData(){
   const aVals=getMultiVals($anno);if(aVals)d=d.filter(r=>aVals.includes(String(r.y)));
   const mVals=getMultiVals($mese);if(mVals)d=d.filter(r=>mVals.includes(r.m+'-'+r.y));
   const sVals=getMultiVals($sett);if(sVals)d=d.filter(r=>sVals.includes(r.wk+'-'+r.y));
+  const gVal=$giorno.value;if(gVal!=='tutti')d=d.filter(r=>r.date.getDay()===+gVal);
   return d;
 }
 function getFiltered(data){
