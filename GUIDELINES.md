@@ -18,8 +18,10 @@ Casi obbligatori:
 | Modifica formula di calcolo | `4. Calculation formulas` |
 | Modifica logica deduplicazione | `1. Automatic deduplication` |
 | Modifica parsing numerico | `3. Italian number format parsing` |
-| Nuova sezione di analisi | Aggiungere voce in Features |
+| Nuova sezione di analisi | Aggiungere voce in Features + sezione dedicata in Data pipeline |
 | Modifica chiave primaria deduplicazione | `1. Automatic deduplication` + tabella blocchi duplicati |
+| Modifica Dataset 2 (Actual) | `Dataset 2 — Actual cash register` |
+| Nuovo tipo di cross-filter | Sezione `Cross-filtering` in Features + sezione 3 in GUIDELINES |
 
 ---
 
@@ -156,18 +158,60 @@ La sezione di analisi è in fondo alla dashboard (`id="prepostSection"`). I graf
 
 ---
 
-## 7. Struttura file
+## 6. Dataset 2 — Actual (Entrate_Uscite.csv)
+
+### Caricamento
+- Autoload via `fetch()` se il file è nella stessa cartella (HTTP server)
+- Fallback manuale: bottone verde "📂 Carica Actual"
+- La sezione "Actual vs Fish Record" è nascosta finché Dataset 2 non è caricato
+
+### Join key
+`Data + Pescheria` — la pescheria viene estratta dalle righe `Tipo=Entrata`, campo `Dettaglio B` (es. `"Pescheria Grassano"` → `Grassano`).
+
+### Aggregazione per giornata
+Per ogni `Data+Pescheria`:
+- `entrata` = somma righe `Tipo=Entrata`
+- `fornitori` = somma righe `Tipo=Uscita, DetA=Fornitori` (valore assoluto)
+- `spese_extra` = somma righe `Tipo=Uscita, DetA=Spese` (benzina, ecc.)
+- `netto_actual` = entrata − fornitori − spese_extra
+- `netto_no_extra` = entrata − fornitori (senza benzina)
+
+### Nessun doppio conteggio
+I due dataset vengono aggregati separatamente e mostrati affiancati. Non si sommano mai. Usare sempre `aggFishByDay()` per DS1 e `aggActual()` per DS2.
+
+### Deduplicazione Dataset 2
+Chiave: `Data|Tipo|DetA|DetB|Cifra` — righe identiche vengono scartate.
+
+---
+
+## 7. Sezioni espandibili
+
+Le 3 sezioni avanzate sono chiuse di default. La funzione `toggleSection(bodyId, arrowId)` gestisce l'apertura/chiusura con animazione CSS (`max-height` transition). Quando una sezione si apre, i grafici Chart.js vengono ridisegnati (non renderizzano correttamente su canvas nascosti).
+
+| Sezione | `bodyId` | Ridisegno al click |
+|---------|----------|--------------------|
+| Actual vs Fish Record | `actualBody` | `renderActual()` |
+| Pre/Post 10/02/2026 | `prepostBody` | `renderPrePost()` |
+| Dati grezzi | `rawBody` | no (tabella HTML) |
+
+---
+
+## 8. Struttura file
 
 ```
 fishery-sales-dashboard/
 ├── pescheria_kpi_dashboard.html   # HTML + CSS inline
 ├── dashboard_script.js            # Tutta la logica JS
-├── sample_data.csv                # Dati di esempio
+├── sample_data.csv                # Dati di esempio Dataset 1
 ├── Screenshot.png                 # Screenshot dashboard
 ├── README.md                      # Documentazione pubblica (sempre aggiornato)
 ├── GUIDELINES.md                  # Questo file (linee guida sviluppo)
 └── .gitignore
 ```
+
+**File CSV reali (non in repo):**
+- `Pescheria - Abascià Excel - Lavoro - Dataset Pesce.csv` — Dataset 1 (fish records)
+- `Pescheria - Abascià Excel - Lavoro - Entrate_Uscite.csv` — Dataset 2 (actual cash, opzionale)
 
 ---
 
@@ -190,5 +234,7 @@ fishery-sales-dashboard/
 - [ ] Se modificata la mappa pesce → verifica allineamento JS/README (script sezione 2)
 - [ ] Se aggiunto un grafico → ha `onClick` con cross-filter?
 - [ ] Se aggiunto un tipo di cross-filter → aggiornato `getFiltered()` e `labels` in `render()`?
+- [ ] Se aggiunta una sezione espandibile → aggiornata `toggleSection()` se necessario?
+- [ ] Se modificato Dataset 2 → aggiornata sezione `Dataset 2` nel README?
 - [ ] README aggiornato se necessario
 - [ ] GUIDELINES aggiornato se necessario

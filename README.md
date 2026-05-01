@@ -16,14 +16,17 @@ An interactive, client-side KPI dashboard for multi-location fishery sales analy
 
 ### Filters
 - **Granularity**: Day (with weekday name: Mon 01/04/2026) · Week · Month · Quarter · Year
-- **Cascading multi-select filters**: Year → Month → Week → Location
+- **Cascading multi-select filters**: Year → Month → Week → Location → Supplier
   - Ctrl+click to select multiple values simultaneously
   - Filters update dynamically based on upstream selections
+- **Day-of-week filter**: multi-select (Monday–Sunday), applies to all charts and sections
+- All dropdown filters apply to both Dataset 1 (fish records) and Dataset 2 (actual cash) simultaneously
 
 ### Cross-filtering (Power BI / QuickSight style)
-- Click any chart (category, fish, supplier) to filter all others
+- Click any chart (category, fish, supplier, location, trend bar) to filter all others
 - Click a table row to filter all charts
 - Active filter badge with one-click reset
+- Supported cross-filter types: `cat` (category), `fish` (fish name), `supplier`, `pe` (location), `trend` (time period)
 
 ### Charts
 
@@ -35,6 +38,13 @@ An interactive, client-side KPI dashboard for multi-location fishery sales analy
 | Revenue Map | Bubble chart: X = kg sold, Y = margin %, bubble size = gross revenue |
 | Supplier spend | Vertical bars + donut |
 
+### Fish detail table
+- Sortable by any column (click header)
+- Scrollable (max height 380px)
+- Cross-filter on row click
+- Columns: Fish · Category · Gross € · Margin € · Margin % · Avg purchase price €/kg · Avg sale price €/kg · Kg sold · Waste kg · Leftover kg
+- Avg prices are **volume-weighted** over the selected period
+
 ### Highlights
 - **Top 3 / Bottom 3 fish** by margin %
 - **Best day / week / month / quarter / year** showing net, gross, volume and margin
@@ -42,11 +52,22 @@ An interactive, client-side KPI dashboard for multi-location fishery sales analy
 ### Period-over-period analysis
 - **WoW** (Week over Week), **MoM** (Month over Month), **YoY** (Year over Year)
 - Compares only **complete periods** — the current week/month/year is excluded automatically
+- Each card shows the period date range (weeks show start–end dates)
 - Metrics: Δ net revenue, Δ gross revenue, Δ volume (kg), Δ margin %, Δ costs
 
+### Collapsible sections (closed by default)
+Three advanced sections are collapsed by default and expand on click:
+
+| Section | Description |
+|---------|-------------|
+| 📊 Actual vs Fish Record | Compares Dataset 2 (real cash register) against Dataset 1 (fish records). Join key: Date + Location |
+| 📅 Pre/Post 10/02/2026 | Analysis of the operational schedule change (which location operates on which day) |
+| 🗃 Raw data | All filtered rows from Dataset 1, sortable, with row counter |
+
 ### Tables
-- **Fish detail table**: sortable by any column, scrollable, cross-filter on row click
-- **Raw data table**: all rows visible after active filters, sortable, with row counter
+- **Fish detail table**: sortable, scrollable, cross-filter on row click
+- **Raw data table** (collapsible): all Dataset 1 rows after active filters, sortable
+- **Actual vs Fish comparison table** (collapsible): per-day join of both datasets with delta columns
 
 ---
 
@@ -56,13 +77,17 @@ An interactive, client-side KPI dashboard for multi-location fishery sales analy
 fishery-sales-dashboard/
 ├── pescheria_kpi_dashboard.html   # Full app (HTML + inline CSS)
 ├── dashboard_script.js            # JS logic: parsing, dedup, aggregation, charts
-├── sample_data.csv                # Sample data (expected CSV structure)
-├── README.md
+├── sample_data.csv                # Sample data (expected CSV structure for Dataset 1)
+├── Screenshot.png                 # Dashboard screenshot
+├── README.md                      # Public documentation
+├── GUIDELINES.md                  # Development guidelines (fish mapping, cross-filter rules, etc.)
 └── .gitignore
 ```
 
-> **The real CSV file is not included in this repository** (contains business-sensitive data).  
-> Use `sample_data.csv` as a reference for the expected structure.
+> **Real CSV files are not included in this repository** (contain business-sensitive data).  
+> Dataset 1: `Pescheria - Abascià Excel - Lavoro - Dataset Pesce.csv`  
+> Dataset 2: `Pescheria - Abascià Excel - Lavoro - Entrate_Uscite.csv`  
+> Use `sample_data.csv` as a reference for Dataset 1 structure.
 
 ---
 
@@ -77,7 +102,11 @@ python3 -m http.server 8000
 # then open: http://localhost:8000/pescheria_kpi_dashboard.html
 ```
 
-The CSV file must be named exactly:
+Both CSV files must be in the same folder as the HTML file:
+- `Pescheria - Abascià Excel - Lavoro - Dataset Pesce.csv` (Dataset 1 — fish records)
+- `Pescheria - Abascià Excel - Lavoro - Entrate_Uscite.csv` (Dataset 2 — actual cash, optional)
+
+Both are loaded automatically on page open. Dataset 2 is optional — if not found, the Actual section remains hidden until manually loaded via the **📂 Carica Actual** button.
 ```
 Pescheria - Abascià Excel - Lavoro - Dataset Pesce.csv
 ```
@@ -289,6 +318,44 @@ function parseNum(s) {
   return isFinite(n) ? n : 0;
 }
 ```
+
+---
+
+## Dataset 2 — Actual cash register (`Entrate_Uscite.csv`)
+
+### Structure
+
+Each day of operations produces a block of rows:
+
+| Row type | `Tipo Spesa` | `Dettaglio A` | `Dettaglio B` | `Cifra` |
+|----------|-------------|---------------|---------------|---------|
+| Daily revenue | `Entrata` | `Guadano` | `Pescheria Grassano` | `€ 470,00` |
+| Supplier payment | `Uscita` | `Fornitori` | `Meridional` | `-€ 175,00` |
+| Extra costs | `Uscita` | `Spese` | `Altro` | `-€ 35,00` |
+
+Extra costs include fuel, miscellaneous expenses — **not present in Dataset 1**.
+
+### Join key: `Date + Location`
+
+The location is extracted from `Dettaglio B` of `Entrata` rows (e.g. `"Pescheria Grassano"` → `Grassano`). All `Uscita` rows for the same date are associated to that location.
+
+### What is compared
+
+| Metric | Dataset 1 (fish records) | Dataset 2 (actual) |
+|--------|--------------------------|-------------------|
+| Gross revenue | Σ(Qv × Pv) per day | `Entrata` amount |
+| Supplier costs | Σ(Qa × Pa) per day | Σ `Uscita/Fornitori` |
+| Extra costs | Not present | Σ `Uscita/Spese` |
+| Net (excl. extras) | Gross − Supplier costs | Entrata − Fornitori |
+| Net (incl. extras) | — | Entrata − Fornitori − Spese |
+
+### No double counting
+
+The two datasets are aggregated **separately** and shown **side by side**. They are never summed together. Days present in only one dataset are highlighted in yellow in the comparison table.
+
+### Filters
+
+The main dropdown filters (Year, Month, Location) apply to both datasets simultaneously. The Actual-specific filters (Tipo Spesa, Dettaglio A, Dettaglio B) apply only to Dataset 2.
 
 ---
 
