@@ -944,16 +944,34 @@ const DN_SHORT=['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
 const PE_COLORS={Grassano:'#3b82f6',Grottole:'#10b981',Brigante:'#f59e0b'};
 
 function aggPrePost(rows){
-  // Returns {pe: {dn: {pre:{cnt,il,inn,qv}, post:{cnt,il,inn,qv}}}}
+  // Aggrega per pe+dn+slot, dividendo per GIORNATE (non per righe CSV)
+  // Prima accumula per giornata, poi fa la media delle giornate
+  // {pe: {dn: {pre: {days:{date:{il,inn,qv}}, totIl, totInn, totQv}, post: {...}}}}
   const res={};
   rows.forEach(r=>{
     const pe=r.pe;
-    const dn=r.date.getDay(); // 0=Dom,1=Lun,...
+    const dn=r.date.getDay();
     const isPre=r.date<CUTOFF_PP;
+    const dayKey=r.date.toISOString().slice(0,10);
     if(!res[pe])res[pe]={};
-    if(!res[pe][dn])res[pe][dn]={pre:{cnt:0,il:0,inn:0,qv:0},post:{cnt:0,il:0,inn:0,qv:0}};
+    if(!res[pe][dn])res[pe][dn]={
+      pre:{days:{},il:0,inn:0,qv:0},
+      post:{days:{},il:0,inn:0,qv:0}
+    };
     const slot=isPre?res[pe][dn].pre:res[pe][dn].post;
-    slot.cnt++;slot.il+=r.il;slot.inn+=r.inn;slot.qv+=r.qv;
+    if(!slot.days[dayKey])slot.days[dayKey]={il:0,inn:0,qv:0};
+    slot.days[dayKey].il+=r.il;
+    slot.days[dayKey].inn+=r.inn;
+    slot.days[dayKey].qv+=r.qv;
+    slot.il+=r.il;slot.inn+=r.inn;slot.qv+=r.qv;
+  });
+  // Aggiungi cnt = numero di giornate distinte
+  Object.values(res).forEach(peObj=>{
+    Object.values(peObj).forEach(dnObj=>{
+      ['pre','post'].forEach(s=>{
+        dnObj[s].cnt=Object.keys(dnObj[s].days).length;
+      });
+    });
   });
   return res;
 }
@@ -1074,11 +1092,11 @@ function renderPrePost(){
         tooltip:{callbacks:{
           title:ctx=>ctx[0].raw.label,
           label:ctx=>[
-            'Kg/riga: '+ctx.raw.x.toFixed(1),
+            'Kg/giornata: '+ctx.raw.x.toFixed(1),
             'Margine: '+ctx.raw.y.toFixed(1)+'%',
             'Lordo medio: \u20ac'+(ctx.raw.il/ctx.raw.cnt).toFixed(0),
             'Netto medio: \u20ac'+(ctx.raw.inn/ctx.raw.cnt).toFixed(0),
-            'Giorni: '+ctx.raw.cnt
+            'Giornate: '+ctx.raw.cnt
           ]
         }}},
       scales:{
@@ -1106,9 +1124,9 @@ function renderPrePost(){
   const volDelta=v=>v===null?'-':(v>=0?'<span style="color:#10b981">+'+v.toFixed(1)+'kg</span>':'<span style="color:#ef4444">'+v.toFixed(1)+'kg</span>');
   tbl.innerHTML='<thead><tr>'+
     '<th>Pescheria</th><th>Giorno</th>'+
-    '<th>Righe Pre</th><th>Lordo/riga Pre</th><th>Marg% Pre</th><th>Kg/riga Pre</th>'+
-    '<th>Righe Post</th><th>Lordo/riga Post</th><th>Marg% Post</th><th>Kg/riga Post</th>'+
-    '<th>Δ Marg%</th><th>Δ Kg/riga</th>'+
+    '<th>Giornate Pre</th><th>Lordo/giornata Pre</th><th>Marg% Pre</th><th>Kg/giornata Pre</th>'+
+    '<th>Giornate Post</th><th>Lordo/giornata Post</th><th>Marg% Post</th><th>Kg/giornata Post</th>'+
+    '<th>Δ Marg%</th><th>Δ Kg/giornata</th>'+
     '</tr></thead><tbody>'+
     rows2.map(r=>'<tr>'+
       '<td style="font-weight:600;">'+r.pe+'</td>'+
