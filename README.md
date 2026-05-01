@@ -183,7 +183,9 @@ Using all fields as the key would keep rows with the same transaction but a triv
 
 ### 2. Fish name normalization
 
-The dataset contained **40+ spelling variants** of the same fish due to case differences, abbreviations, typos and alternative names. The `FISH_NORM()` function in `dashboard_script.js` maps all variants to a canonical name before any aggregation or deduplication occurs.
+The dataset contained **118 unique fish names** across all records. The `FISH_NORM()` function in `dashboard_script.js` maps spelling variants to a canonical name before any aggregation or deduplication. Names not in the explicit map are title-cased automatically.
+
+**Explicit normalization map** (82 raw variants → 48 canonical names):
 
 | Raw variants in CSV | Canonical name |
 |--------------------|----------------|
@@ -206,7 +208,7 @@ The dataset contained **40+ spelling variants** of the same fish due to case dif
 | `Pesce spada` | `Pesce Spada` |
 | `Pescatrice`, `Pescatrici` | `Pescatrice` |
 | `Polpi`, `Polpo`, `Polipo` | `Polpo` |
-| `Polpo T7` | `Polpo T7` |
+| `Polpo T7`, `Polpo  T7` | `Polpo T7` |
 | `Polpo T4` | `Polpo T4` |
 | `Polpi t8`, `Polpo t8`, `Polipi t8` | `Polpo T8` |
 | `Raia`, `Raya`, `Razza` | `Razza` |
@@ -235,7 +237,39 @@ The dataset contained **40+ spelling variants** of the same fish due to case dif
 | `Lupini mega` | `Lupini Mega` |
 | `Lupini` | `Lupini` |
 
-Any name not found in the map is title-cased automatically as a fallback (e.g. `Alici` → `Alici`, `Salmone` → `Salmone`).
+**Passthrough names** (already correctly cased, no normalization needed):
+
+| Name in CSV | Used as-is |
+|-------------|-----------|
+| `Alici` | `Alici` |
+| `Anguille` | `Anguille` |
+| `Astice` | `Astice` |
+| `Calamari` | `Calamari` |
+| `Cefalo` | `Cefalo` |
+| `Cicala` | `Cicala` |
+| `Datterino` | `Datterino` |
+| `Filetto persico` | `Filetto Persico` |
+| `Filetto ricomposto` | `Filetto Ricomposto` |
+| `Gallinella` | `Gallinella` |
+| `Lanzardo` | `Lanzardo` |
+| `Melù` | `Melù` |
+| `Noci Bianche` | `Noci Bianche` |
+| `Obrina` | `Obrina` |
+| `Ostriche` | `Ostriche` |
+| `Palombo` | `Palombo` |
+| `Paranza` | `Paranza` |
+| `Persico` | `Persico` |
+| `Ricciola` | `Ricciola` |
+| `Ricomposto` | `Ricomposto` |
+| `Salmone` | `Salmone` |
+| `Sbani` | `Sbani` |
+| `Serra` | `Serra` |
+| `Sgombro` | `Sgombro` |
+| `Suri` | `Suri` |
+| `Tonno` | `Tonno` |
+| `Triglie` | `Triglie` |
+| `Trote Salmonate` | `Trote Salmonate` |
+| `Violette` | `Violette` |
 
 ---
 
