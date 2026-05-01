@@ -1193,14 +1193,22 @@ function renderActual(){
         plugins:{legend:{position:'top',labels:{font:{size:9},boxWidth:10}},
           tooltip:{mode:'index',intersect:false,callbacks:{
             label:ctx=>ctx.dataset.label+': \u20ac'+ctx.parsed.y.toLocaleString('it-IT'),
-            afterBody:()=>[
-              '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500',
-              'Totale Fish (filtri): \u20ac'+Math.round(totFish1).toLocaleString('it-IT'),
-              'Totale Actual fornitori: \u20ac'+Math.round(totAct1).toLocaleString('it-IT'),
-              'Totale Benzina: \u20ac'+Math.round(totBenz).toLocaleString('it-IT'),
-              'Totale Altro: \u20ac'+Math.round(totAltro).toLocaleString('it-IT'),
-              '\u0394 Fish vs Actual: \u20ac'+(totAct1-totFish1>=0?'+':'')+Math.round(totAct1-totFish1).toLocaleString('it-IT'),
-            ]
+            afterBody:()=>{
+              const diff=totAct1-totFish1;
+              const pct=totFish1>0?diff/totFish1*100:0;
+              const sign=diff>=0?'+':'';
+              const arrow=diff<=0?'\u2193 Stai spendendo meno del fish record \u2714':'\u2191 Stai spendendo pi\u00f9 del fish record \u26A0';
+              return[
+                '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500',
+                'Totale Fish (filtri): \u20ac'+Math.round(totFish1).toLocaleString('it-IT'),
+                'Totale Actual fornitori: \u20ac'+Math.round(totAct1).toLocaleString('it-IT'),
+                'Totale Benzina: \u20ac'+Math.round(totBenz).toLocaleString('it-IT'),
+                'Totale Altro: \u20ac'+Math.round(totAltro).toLocaleString('it-IT'),
+                '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500',
+                '\u0394 Actual vs Fish: '+sign+'\u20ac'+Math.round(diff).toLocaleString('it-IT')+' ('+sign+pct.toFixed(1)+'%)',
+                arrow,
+              ];
+            }
           }}},
         scales:{x:{grid:{display:false},ticks:{font:{size:9},maxRotation:55}},
           y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:9},callback:v=>v>=1000?'\u20ac'+(v/1000).toFixed(0)+'k':'\u20ac'+v}}}
