@@ -1063,15 +1063,6 @@ function getActualFiltered(){
   if(pVals)d=d.filter(r=>r.tipo!=='Entrata'||pVals.includes(r.pe));
   const gVals=[...(document.getElementById('fGiorno')?.selectedOptions||[])].map(o=>o.value).filter(v=>v!=='tutti');
   if(gVals.length)d=d.filter(r=>gVals.includes(String(r.date.getDay())));
-  // Applica anche il cross-filter trend dalla sezione principale
-  if(crossFilter&&crossFilter.type==='trend'){
-    const k=crossFilter.value;
-    if(PER==='giorno')d=d.filter(r=>r.ds===+k);
-    else if(PER==='settimana')d=d.filter(r=>r.y*100+r.wk===+k);
-    else if(PER==='mese')d=d.filter(r=>r.y*100+r.m===+k);
-    else if(PER==='trimestre')d=d.filter(r=>r.y*10+r.q===+k);
-    else if(PER==='anno')d=d.filter(r=>r.y===+k);
-  }
   return d;
 }
 
@@ -1226,12 +1217,15 @@ function renderActual(){
   const kpiEl=document.getElementById('actualKpi');
   if(kpiEl){
     const dL=totAct.entrata-totFish.il,dF=totAct.forn-totFish.sp,dN=totAct.netto_full-totFish.inn;
-    const col=v=>(v>=0?'<span style="color:#10b981">+':'<span style="color:#ef4444">')+fmt(v,0,'\u20ac ')+'</span>';
+    // col: verde se positivo (incasso, netto)
+    const col=v=>{const n=Math.abs(v)<1;const g=v>=0;const c=n?'#6b7280':g?'#10b981':'#ef4444';return'<span style="color:'+c+';">'+(v>=0?'+':'')+fmt(v,0,'\u20ac ')+'</span>';};
+    // colInv: verde se negativo (spesa — meno è meglio)
+    const colInv=v=>{const n=Math.abs(v)<1;const g=v<=0;const c=n?'#6b7280':g?'#10b981':'#ef4444';return'<span style="color:'+c+';">'+(v>=0?'+':'')+fmt(v,0,'\u20ac ')+'</span>';};
     const kpis=[
       {l:'Lordo Fish Record',v:fmt(totFish.il,0,'\u20ac '),s:'\u03a3 Qv\u00d7Pv'},
       {l:'Lordo Actual (cassa)',v:fmt(totAct.entrata,0,'\u20ac '),s:'\u0394 vs fish: '+col(dL)},
       {l:'Spese Fish (Qa\u00d7Pa)',v:fmt(totFish.sp,0,'\u20ac '),s:'Solo pesce'},
-      {l:'Fornitori Actual',v:fmt(totAct.forn,0,'\u20ac '),s:'\u0394 vs fish: '+col(dF)},
+      {l:'Fornitori Actual',v:fmt(totAct.forn,0,'\u20ac '),s:'\u0394 vs fish: '+colInv(dF)+(Math.abs(dF)>=1&&dF>0?' \u26A0\uFE0F':'')},
       {l:'Benzina',v:fmt(totAct.benz,0,'\u20ac '),s:'Non in fish record'},
       {l:'Altro',v:fmt(totAct.altro,0,'\u20ac '),s:'Non in fish record'},
       {l:'Netto Fish',v:fmt(totFish.inn,0,'\u20ac '),s:'Marg. '+mpFish.toFixed(1)+'%'},
