@@ -1014,9 +1014,9 @@ function aggActualByPeriod(data2){
     else if(PER==='mese'){k=r.y*100+r.m;l=MN3[r.m]+' '+r.y;}
     else if(PER==='trimestre'){k=r.y*10+r.q;l='Q'+r.q+' '+r.y;}
     else{k=r.y;l=String(r.y);}
-    if(!G[k])G[k]={l,k,entrata:0,forn_pesce:0,benzina:0,altro:0};
+    if(!G[k])G[k]={l,k,entrata:0,forn_pesce:0,benzina:0,altro:0,_byForn:{}};
     if(r.categoria==='entrata')G[k].entrata+=r.cifra;
-    else if(r.categoria==='fornitore_pesce')G[k].forn_pesce+=Math.abs(r.cifra);
+    else if(r.categoria==='fornitore_pesce'){G[k].forn_pesce+=Math.abs(r.cifra);G[k]._byForn[r.detB]=(G[k]._byForn[r.detB]||0)+Math.abs(r.cifra);}
     else if(r.categoria==='benzina')G[k].benzina+=Math.abs(r.cifra);
     else G[k].altro+=Math.abs(r.cifra);
   });
@@ -1031,6 +1031,8 @@ function aggActualByPeriod(data2){
 
 function aggFishByPeriod(data1){
   const G={};
+  // Lista fornitori unici in DS1 (escludi Rimanenza che ha sp=0)
+  const forns=[...new Set(data1.map(r=>r.forn).filter(f=>f&&f!=='Rimanenza'&&f!=='N/D'))].sort();
   data1.forEach(r=>{
     let k,l;
     if(PER==='giorno'){k=r.ds;const dn=DN_IT[r.date.getDay()];l=dn+' '+String(r.date.getDate()).padStart(2,'0')+'/'+String(r.m).padStart(2,'0')+'/'+r.y;}
@@ -1038,10 +1040,13 @@ function aggFishByPeriod(data1){
     else if(PER==='mese'){k=r.y*100+r.m;l=MN3[r.m]+' '+r.y;}
     else if(PER==='trimestre'){k=r.y*10+r.q;l='Q'+r.q+' '+r.y;}
     else{k=r.y;l=String(r.y);}
-    if(!G[k])G[k]={l,k,il:0,inn:0,sp:0};
+    if(!G[k]){G[k]={l,k,il:0,inn:0,sp:0,byForn:{}};forns.forEach(f=>{G[k].byForn[f]=0;});}
     G[k].il+=r.il;G[k].inn+=r.inn;G[k].sp+=r.sp;
+    if(r.forn&&r.forn!=='Rimanenza'&&r.forn!=='N/D')G[k].byForn[r.forn]=(G[k].byForn[r.forn]||0)+r.sp;
   });
-  return Object.values(G).sort((a,b)=>+a.k-+b.k).map(v=>({...v,mp_fish:v.il>0?v.inn/v.il*100:0}));
+  const result=Object.values(G).sort((a,b)=>+a.k-+b.k).map(v=>({...v,mp_fish:v.il>0?v.inn/v.il*100:0}));
+  result._forns=forns; // lista fornitori per il grafico
+  return result;
 }
 
 function getActualFiltered(){
@@ -1120,12 +1125,41 @@ function renderActual(){
   ]},options:bOpts()});
   if(ACT2)ACT2.destroy();
   const c2=document.getElementById('actFornChart');
-  if(c2)ACT2=new Chart(c2,{type:'bar',data:{labels,datasets:[
-    {label:'Spese Fish',data:allKeys.map(k=>Math.round(fishMap[k]?.sp||0)),backgroundColor:'rgba(239,68,68,.4)',borderColor:'#ef4444',borderWidth:1,borderRadius:3},
-    {label:'Fornitori Actual',data:allKeys.map(k=>Math.round(actMap[k]?.forn_pesce||0)),backgroundColor:'rgba(245,158,11,.5)',borderColor:'#f59e0b',borderWidth:1,borderRadius:3},
-    {label:'Benzina',data:allKeys.map(k=>Math.round(actMap[k]?.benzina||0)),backgroundColor:'rgba(239,68,68,.2)',borderColor:'#ef4444',borderWidth:1,borderRadius:3,stack:'act'},
-    {label:'Altro',data:allKeys.map(k=>Math.round(actMap[k]?.altro||0)),backgroundColor:'rgba(156,163,175,.4)',borderColor:'#9ca3af',borderWidth:1,borderRadius:3,stack:'act'}
-  ]},options:bOpts()});
+  if(c2){
+    // DS1: stacked per fornitore (colonna Fornitore × Spese)
+    const forns=fishPeriods._forns||[];
+    const fornColors={'Meridional':'#3b82f6','Pinuccio':'#10b981','Brezza':'#f59e0b','Franco':'#a855f7','Ottavio':'#06b6d4'};
+    const ds1Datasets=forns.map(f=>({
+      label:'Fish: '+f,
+      data:allKeys.map(k=>Math.round(fishMap[k]?.byForn?.[f]||0)),
+      backgroundColor:(fornColors[f]||'#9ca3af')+'66',
+      borderColor:fornColors[f]||'#9ca3af',
+      borderWidth:1,borderRadius:0,stack:'fish'
+    }));
+    // DS2: stacked fornitori pesce → benzina → altro (tutte le uscite)
+    const ds2Forn=FORNITORI_PESCE.map(f=>({
+      label:'Actual: '+f,
+      data:allKeys.map(k=>{
+        const a=actMap[k];if(!a)return 0;
+        // somma uscite per questo fornitore nel periodo
+        return Math.round(a['_byForn']?.[f]||0);
+      }),
+      backgroundColor:(fornColors[f]||'#9ca3af')+'99',
+      borderColor:fornColors[f]||'#9ca3af',
+      borderWidth:1,borderDash:[3,2],borderRadius:0,stack:'actual'
+    }));
+    const ds2Extra=[
+      {label:'Actual: Benzina',data:allKeys.map(k=>Math.round(actMap[k]?.benzina||0)),backgroundColor:'rgba(239,68,68,.35)',borderColor:'#ef4444',borderWidth:1,borderRadius:0,stack:'actual'},
+      {label:'Actual: Altro',data:allKeys.map(k=>Math.round(actMap[k]?.altro||0)),backgroundColor:'rgba(156,163,175,.35)',borderColor:'#9ca3af',borderWidth:1,borderRadius:0,stack:'actual'}
+    ];
+    ACT2=new Chart(c2,{type:'bar',data:{labels,datasets:[...ds1Datasets,...ds2Forn,...ds2Extra]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'top',labels:{font:{size:9},boxWidth:10}},
+          tooltip:{mode:'index',intersect:false,callbacks:{label:ctx=>ctx.dataset.label+': \u20ac'+ctx.parsed.y.toLocaleString('it-IT')}}},
+        scales:{x:{grid:{display:false},ticks:{font:{size:9},maxRotation:55}},
+          y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:9},callback:v=>v>=1000?'\u20ac'+(v/1000).toFixed(0)+'k':'\u20ac'+v}}}
+      }});
+  }
   if(ACT3)ACT3.destroy();
   const c3=document.getElementById('actNettoChart');
   if(c3)ACT3=new Chart(c3,{type:'bar',data:{labels,datasets:[
