@@ -40,23 +40,27 @@ const FISH_NORM=(function(){
     'pesce spada':'Pesce Spada',
     // Pescatrice
     'pescatrici':'Pescatrice','pescatrice':'Pescatrice',
-    // Polpo / Polpi
-    'polpo':'Polpo','polpi':'Polpo','polpo t7':'Polpo T7','polpo t4':'Polpo T4',
-    'polpo t8':'Polpo T8','polpi t8':'Polpo T8','polipi t8':'Polpo T8',
+    // Polpo / Polpi / Polipo — tutti Polipo
+    'polpo':'Polipo','polpi':'Polipo','polipo':'Polipo',
+    'polpo t7':'Polipo T7','polpo t4':'Polipo T4',
+    'polpo t8':'Polipo T8','polpi t8':'Polipo T8','polipi t8':'Polipo T8',
     // Raia / Raya / Razza
     'raia':'Razza','raya':'Razza','razza':'Razza',
     // Sarde
     'sarde':'Sarde',
     // Scampi
     'scampi':'Scampi',
-    // Seppia / Seppie
-    'seppia':'Seppia','seppia 10/20':'Seppia Pulita 10/20','seppia cioco':'Seppia Cioco',
+    // Seppia / Seppie — tutte Seppia (singolare canonico)
+    'seppia':'Seppia','seppie':'Seppia',
+    'seppia 10/20':'Seppia Pulita 10/20','seppia cioco':'Seppia Cioco',
     'seppia pulita':'Seppia Pulita','seppia pulita 10/20':'Seppia Pulita 10/20',
     'seppia sporca':'Seppia Sporca',
-    'seppie':'Seppie','seppie 10/20':'Seppia Pulita 10/20','seppie 20/40':'Seppie 20/40',
+    'seppie 10/20':'Seppia Pulita 10/20','seppie 20/40':'Seppie 20/40',
     'seppie cioco':'Seppia Cioco','seppie pulita':'Seppia Pulita',
     'seppie pulita gold':'Seppia Pulita Gold','seppie pulite':'Seppia Pulita',
     'seppie pulite 10/20':'Seppia Pulita 10/20',
+    // Ombrina
+    'ombrina':'Ombrina','ombrine':'Ombrina',
     // Sogliola
     'sogliola':'Sogliola','sogliola (lingua)':'Sogliola Lingua',
     'sogliola (tigri)':'Sogliola Tigri','sogliola tigri':'Sogliola Tigri',
@@ -412,18 +416,23 @@ function renderWoW(data){
   const awW={},awM={},awY={};
   allData.forEach(r=>{
     const wk=r.wk+'-'+r.y;
-    if(!awW[wk])awW[wk]={k:r.y*10000+r.wk,label:'S'+String(r.wk).padStart(2,'0')+'-'+r.y,inn:0,il:0,sp:0,qv:0};
+    if(!awW[wk]){
+      const rng=weekRange(r.wk,r.y);
+      awW[wk]={k:r.y*10000+r.wk,
+        label:'S'+String(r.wk).padStart(2,'0')+'-'+r.y,
+        dateRange:fmtDateShort(rng.start)+' \u2013 '+fmtDateShort(rng.end),
+        inn:0,il:0,sp:0,qv:0};
+    }
     awW[wk].inn+=r.inn;awW[wk].il+=r.il;awW[wk].sp+=r.sp;awW[wk].qv+=r.qv;
     const mk=r.m+'-'+r.y;
-    if(!awM[mk])awM[mk]={k:r.y*100+r.m,label:MN3[r.m]+' '+r.y,inn:0,il:0,sp:0,qv:0};
+    if(!awM[mk])awM[mk]={k:r.y*100+r.m,label:MN3[r.m]+' '+r.y,dateRange:MN[r.m]+' '+r.y,inn:0,il:0,sp:0,qv:0};
     awM[mk].inn+=r.inn;awM[mk].il+=r.il;awM[mk].sp+=r.sp;awM[mk].qv+=r.qv;
     const yk=String(r.y);
-    if(!awY[yk])awY[yk]={k:r.y,label:String(r.y),inn:0,il:0,sp:0,qv:0};
+    if(!awY[yk])awY[yk]={k:r.y,label:String(r.y),dateRange:String(r.y),inn:0,il:0,sp:0,qv:0};
     awY[yk].inn+=r.inn;awY[yk].il+=r.il;awY[yk].sp+=r.sp;awY[yk].qv+=r.qv;
   });
 
   function comp(obj,label,curKey){
-    // Escludi il periodo corrente (temporalmente, non per volume)
     let arr=Object.values(obj).sort((a,b)=>a.k-b.k).filter(x=>x.k!==curKey);
     if(arr.length<2)return'<div class="wow-card"><div class="wow-title">'+label+'</div><div style="font-size:11px;color:#9ca3af;">Dati insufficienti (periodi completi)</div></div>';
     const cur=arr[arr.length-1],prev=arr[arr.length-2];
@@ -432,7 +441,12 @@ function renderWoW(data){
     const dMp=delta(mpCur,mpPrev);
     return'<div class="wow-card">'+
       '<div class="wow-title">'+label+'</div>'+
-      '<div style="font-size:9px;color:#9ca3af;margin-bottom:6px;">'+cur.label+' vs '+prev.label+'</div>'+
+      '<div style="font-size:9px;color:#9ca3af;margin-bottom:2px;">'+
+        '<b style="color:#374151;">'+cur.label+'</b> <span style="color:#d1d5db;">|</span> '+cur.dateRange+
+      '</div>'+
+      '<div style="font-size:9px;color:#9ca3af;margin-bottom:6px;">'+
+        'vs <b style="color:#374151;">'+prev.label+'</b> <span style="color:#d1d5db;">|</span> '+prev.dateRange+
+      '</div>'+
       '<div class="wow-grid">'+
         '<div class="wow-item"><span class="wlbl">Incasso netto</span><span class="wval">'+fmtDelta(dInn)+'</span><span style="font-size:9px;color:#9ca3af;">\u20ac'+fmt(cur.inn,0)+'</span></div>'+
         '<div class="wow-item"><span class="wlbl">Incasso lordo</span><span class="wval">'+fmtDelta(dIl)+'</span><span style="font-size:9px;color:#9ca3af;">\u20ac'+fmt(cur.il,0)+'</span></div>'+
@@ -576,7 +590,7 @@ function renderFishBar(a){
   if(!a||!a.fish.length){if(FC)FC.destroy();wrap.style.height='60px';wrap.style.overflowY='';return;}
   // Ordina per margine % decrescente
   const fish=[...a.fish].sort((a,b)=>b.mp-a.mp);
-  const barH=26;
+  const barH=28;
   const totalH=fish.length*barH+60;
   const maxH=420;
   wrap.style.height=Math.min(totalH,maxH)+'px';
@@ -585,48 +599,102 @@ function renderFishBar(a){
   canvas.style.height=totalH+'px';
   if(FC)FC.destroy();
 
-  // Plugin: label con margine% + utile netto a destra della barra
+  // Stacked 100%: segmento netto (verde) + segmento costi (grigio)
+  // Ogni barra = 100% dell'incasso lordo
+  // Segmento netto = margine% del lordo
+  // Segmento costi = (100 - margine%) del lordo
+  const netPct  = fish.map(f=>f.il>0?+(f.inn/f.il*100).toFixed(2):0);
+  const costPct = fish.map(f=>f.il>0?+(100-f.inn/f.il*100).toFixed(2):100);
+
+  // Plugin: label margine% centrata nel segmento netto + lordo/netto a destra
   const fishLabelPlugin={id:'fishLabel',afterDatasetsDraw(chart){
-    const ctx=chart.ctx;const meta=chart.getDatasetMeta(0);if(!meta||meta.hidden)return;
-    ctx.save();ctx.font='bold 9px sans-serif';ctx.textBaseline='middle';
-    meta.data.forEach((bar,i)=>{
+    const ctx=chart.ctx;
+    const metaNet=chart.getDatasetMeta(0);
+    if(!metaNet||metaNet.hidden)return;
+    ctx.save();
+    ctx.textBaseline='middle';
+    metaNet.data.forEach((bar,i)=>{
       const f=fish[i];if(!f)return;
-      // Margine % vicino alla barra
-      const mpLabel=f.mp.toFixed(1)+'%';
+      const barW=bar.x-chart.scales.x.getPixelForValue(0);
+      // Margine% dentro la barra netta (solo se abbastanza larga)
+      if(Math.abs(barW)>28){
+        ctx.font='bold 9px sans-serif';
+        ctx.fillStyle='#fff';
+        ctx.textAlign='center';
+        ctx.fillText(f.mp.toFixed(1)+'%', bar.x-Math.abs(barW)/2, bar.y);
+      }
+      // Lordo + Netto a destra di tutta la barra (100%)
+      const xEnd=chart.scales.x.getPixelForValue(100)+4;
+      ctx.font='9px sans-serif';
+      ctx.fillStyle='#374151';
+      ctx.textAlign='left';
+      const ilLabel=f.il>=1000?'\u20ac'+(f.il/1000).toFixed(1)+'k':'\u20ac'+Math.round(f.il);
       const innLabel=f.inn>=0?'+\u20ac'+(Math.abs(f.inn)>=1000?(Math.abs(f.inn)/1000).toFixed(1)+'k':Math.round(Math.abs(f.inn))):'-\u20ac'+(Math.abs(f.inn)>=1000?(Math.abs(f.inn)/1000).toFixed(1)+'k':Math.round(Math.abs(f.inn)));
-      const label=mpLabel+'  '+innLabel;
-      const x=f.inn>=0?bar.x+5:bar.x-5;
-      ctx.fillStyle=f.inn>=0?'#374151':'#ef4444';
-      ctx.textAlign=f.inn>=0?'left':'right';
-      ctx.fillText(label,x,bar.y);
+      ctx.fillText(ilLabel+' / '+innLabel, xEnd, bar.y);
     });
     ctx.restore();
   }};
 
   FC=new Chart(canvas,{
-    type:'bar',plugins:[fishLabelPlugin],
-    data:{labels:fish.map(f=>f.n),datasets:[{
-      label:'Margine \u20ac',data:fish.map(f=>Math.round(f.inn)),
-      backgroundColor:fish.map(f=>{
-        if(crossFilter&&crossFilter.type==='fish'&&crossFilter.value===f.n)return f.inn>=0?'rgba(59,130,246,.7)':'rgba(239,68,68,.7)';
-        return f.inn>=0?'rgba(59,130,246,.18)':'rgba(239,68,68,.18)';
-      }),
-      borderColor:fish.map(f=>f.inn>=0?'#3b82f6':'#ef4444'),borderWidth:1,borderRadius:3
-    }]},
-    options:{indexAxis:'y',responsive:false,maintainAspectRatio:false,
-      layout:{padding:{right:110}},
+    type:'bar',
+    plugins:[fishLabelPlugin],
+    data:{
+      labels:fish.map(f=>f.n),
+      datasets:[
+        {
+          label:'Margine netto %',
+          data:netPct,
+          backgroundColor:fish.map(f=>{
+            if(crossFilter&&crossFilter.type==='fish'&&crossFilter.value===f.n)return'rgba(16,185,129,.85)';
+            return f.mp>=35?'rgba(16,185,129,.7)':f.mp>=15?'rgba(245,158,11,.7)':'rgba(239,68,68,.7)';
+          }),
+          borderWidth:0,borderRadius:0
+        },
+        {
+          label:'Costi %',
+          data:costPct,
+          backgroundColor:fish.map(f=>{
+            if(crossFilter&&crossFilter.type==='fish'&&crossFilter.value===f.n)return'rgba(209,213,219,.6)';
+            return'rgba(209,213,219,.35)';
+          }),
+          borderWidth:0,borderRadius:0
+        }
+      ]
+    },
+    options:{
+      indexAxis:'y',responsive:false,maintainAspectRatio:false,
+      layout:{padding:{right:130}},
       onClick(evt,els){
         if(!els.length){crossFilter=null;render();return;}
         const fn=fish[els[0].index].n;
         if(crossFilter&&crossFilter.type==='fish'&&crossFilter.value===fn)crossFilter=null;
         else crossFilter={type:'fish',value:fn};render();
       },
-      plugins:{legend:{display:false},tooltip:{callbacks:{
-        label:ctx=>'Margine: \u20ac'+ctx.parsed.x.toLocaleString('it-IT')+' ('+fish[ctx.dataIndex].mp.toFixed(1)+'%)'
-      }}},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          mode:'index',intersect:false,
+          callbacks:{
+            title:ctx=>fish[ctx[0].dataIndex].n,
+            label:ctx=>{
+              const f=fish[ctx.dataIndex];
+              if(ctx.datasetIndex===0)return'Margine: '+f.mp.toFixed(1)+'% (\u20ac'+Math.round(f.inn).toLocaleString('it-IT')+' netto)';
+              return'Costi: '+(100-f.mp).toFixed(1)+'% (\u20ac'+Math.round(f.sp).toLocaleString('it-IT')+' acquisti)';
+            },
+            afterBody:ctx=>{
+              const f=fish[ctx[0].dataIndex];
+              return['\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500','Lordo: \u20ac'+Math.round(f.il).toLocaleString('it-IT'),'Netto: \u20ac'+Math.round(f.inn).toLocaleString('it-IT'),'Kg venduti: '+f.qv.toFixed(1)+'kg'];
+            }
+          }
+        }
+      },
       scales:{
-        x:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:9},color:'#9ca3af',callback:v=>v>=1000?'\u20ac'+(v/1000).toFixed(0)+'k':'\u20ac'+v}},
-        y:{grid:{display:false},ticks:{font:{size:10},color:'#374151'}}
+        x:{
+          stacked:true,min:0,max:100,
+          grid:{color:'rgba(0,0,0,.04)'},
+          ticks:{font:{size:9},color:'#9ca3af',callback:v=>v+'%'}
+        },
+        y:{stacked:true,grid:{display:false},ticks:{font:{size:10},color:'#374151'}}
       }
     }
   });

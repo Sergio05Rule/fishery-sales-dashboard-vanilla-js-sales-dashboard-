@@ -205,21 +205,21 @@ The dataset contained **40+ spelling variants** of the same fish due to case dif
 | `Pancasio`, `Pangasio` | `Pangasio` |
 | `Pesce spada` | `Pesce Spada` |
 | `Pescatrice`, `Pescatrici` | `Pescatrice` |
-| `Polpi`, `Polpo` | `Polpo` |
-| `Polpo T7` | `Polpo T7` |
-| `Polpo T4` | `Polpo T4` |
-| `Polpi t8`, `Polpo t8`, `Polipi t8` | `Polpo T8` |
+| `Polpi`, `Polpo`, `Polipo` | `Polipo` |
+| `Polpo T7` | `Polipo T7` |
+| `Polpo T4` | `Polipo T4` |
+| `Polpi t8`, `Polpo t8`, `Polipi t8` | `Polipo T8` |
 | `Raia`, `Raya`, `Razza` | `Razza` |
 | `Sarde` | `Sarde` |
 | `Scampi` | `Scampi` |
-| `Seppia` | `Seppia` |
+| `Seppia`, `Seppie` | `Seppia` |
 | `Seppia 10/20`, `Seppie 10/20`, `Seppia pulita 10/20`, `Seppie pulite 10/20` | `Seppia Pulita 10/20` |
 | `Seppia cioco`, `Seppie cioco` | `Seppia Cioco` |
 | `Seppia pulita`, `Seppie pulita`, `Seppie pulite` | `Seppia Pulita` |
 | `Seppia sporca` | `Seppia Sporca` |
-| `Seppie` | `Seppie` |
 | `Seppie 20/40` | `Seppie 20/40` |
 | `Seppie pulita gold` | `Seppia Pulita Gold` |
+| `Ombrina`, `Ombrine` | `Ombrina` |
 | `Sogliola` | `Sogliola` |
 | `Sogliola (lingua)` | `Sogliola Lingua` |
 | `Sogliola tigri`, `Sogliole tigri`, `Sogliola(TIgri)`, `Sogliola (tigri)` | `Sogliola Tigri` |
@@ -235,7 +235,7 @@ The dataset contained **40+ spelling variants** of the same fish due to case dif
 | `Lupini mega` | `Lupini Mega` |
 | `Lupini` | `Lupini` |
 
-Any name not found in the map is title-cased automatically as a fallback (e.g. `pesce spada` → `Pesce Spada`).
+Any name not found in the map is title-cased automatically as a fallback (e.g. `Alici` → `Alici`, `Salmone` → `Salmone`).
 
 ---
 
