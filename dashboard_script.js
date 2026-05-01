@@ -1245,35 +1245,54 @@ function renderActual(){
 
     // Definizione colonne con tooltip
     const cols=[
-      {h:'Periodo',tip:''},
-      {h:'Incasso lordo (Pesce)',tip:'Dataset 1 — somma Incasso Lordo (Qv\u00d7Pv) per il periodo'},
-      {h:'Incasso lordo (Actual)',tip:'Dataset 2 — somma Entrate cassa per il periodo'},
-      {h:'\u0394 Incasso lordo',tip:'Differenza assoluta e % tra Actual e Fish Record. Positivo = actual > fish (hai incassato pi\u00f9 del previsto)'},
-      {h:'Spesa pesce (Pesce)',tip:'Dataset 1 — somma Spese (Qa\u00d7Pa) per il periodo, solo pesce'},
-      {h:'Spesa pesce (Actual)',tip:'Dataset 2 — somma Uscite Fornitori pesce (Meridional, Pinuccio, Brezza, Franco, Ottavio)'},
-      {h:'\u0394 Spesa fornitori',tip:'Differenza tra spesa actual e fish record. VERDE se actual < fish = i fornitori hanno fatto sconto o prezzi migliori. ROSSO se actual > fish = hai pagato di più'},
-      {h:'Netto Fish (Pesce)',tip:'Dataset 1 — Incasso Lordo meno Spese. Formula: Incasso(lordo) \u2212 Spese'},
-      {h:'Netto Fish (Actual)',tip:'Dataset 2 — Entrate meno Fornitori pesce (senza benzina e altro). Confronto diretto con Netto Fish'},
-      {h:'\u0394 Netto (forn.)',tip:'Differenza tra Netto Actual (solo fornitori) e Netto Fish. Misura la discrepanza tra cassa reale e stima pesce'},
-      {h:'Benzina',tip:'Dataset 2 — Uscite con Dettaglio B = Benzina. Non presente nel fish record'},
-      {h:'Altro',tip:'Dataset 2 — Uscite con Dettaglio B = Altro o spese varie. Non presente nel fish record'},
-      {h:'Netto Actual (tutto)',tip:'Dataset 2 — Entrate meno tutti i costi: Fornitori + Benzina + Altro. Margine reale completo'},
-      {h:'\u0394 Netto (con extra)',tip:'Differenza tra Netto Actual completo e Netto Fish. Include l\u2019impatto di benzina e altre spese'},
-      {h:'Marg% (Pesce)',tip:'Dataset 1 — Margine % = Netto Fish / Incasso Lordo \u00d7 100. Media ponderata per volume'},
-      {h:'Marg% (Actual)',tip:'Dataset 2 — Margine % = Netto Actual (tutto) / Entrate \u00d7 100. Margine reale incluse tutte le spese'},
+      {h:'Periodo'},
+      {h:'Incasso lordo (Pesce)'},
+      {h:'Incasso lordo (Actual)'},
+      {h:'\u0394 Incasso lordo'},
+      {h:'Spesa pesce (Pesce)'},
+      {h:'Spesa pesce (Actual)'},
+      {h:'\u0394 Spesa fornitori'},
+      {h:'Netto Fish (Pesce)'},
+      {h:'Netto Fish (Actual)'},
+      {h:'\u0394 Netto (forn.)'},
+      {h:'Benzina'},
+      {h:'Altro'},
+      {h:'Netto Actual (tutto)'},
+      {h:'\u0394 Netto (con extra)'},
+      {h:'Marg% (Pesce)'},
+      {h:'Marg% (Actual)'},
     ];
 
     const thStyle='padding:7px 9px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;white-space:nowrap;font-size:10px;cursor:default;position:sticky;top:0;background:#fff;z-index:1;';
-    const thead='<thead><tr>'+cols.map(c=>{
-      const icon=c.tip?'<span class="tip-icon" data-tip="'+c.tip.replace(/"/g,"'")+'"> \u24d8</span>':'';
-      return'<th style="'+thStyle+'" '+(c.tip?'data-tip="'+c.tip.replace(/"/g,"'")+'"':'')+'>'+c.h+icon+'</th>';
-    }).join('')+'</tr></thead>';
+    const thead='<thead><tr>'+cols.map(c=>'<th style="'+thStyle+'">'+c.h+'</th>').join('')+'</tr></thead>';
+
+    // Commento contestuale per le celle delta
+    function deltaComment(diff,type){
+      if(diff===null)return'';
+      if(type==='lordo'){
+        if(diff>0)return'<div style="font-size:9px;color:#10b981;margin-top:1px;">\uD83D\uDCC8 Hai incassato pi\u00f9 del previsto!</div>';
+        if(diff<0)return'<div style="font-size:9px;color:#ef4444;margin-top:1px;">\uD83D\uDCC9 Hai incassato meno del previsto</div>';
+        return'';
+      }
+      if(type==='spesa'){
+        if(diff<0)return'<div style="font-size:9px;color:#10b981;margin-top:1px;">\uD83D\uDCB0 Sconto fornitori, bravo!</div>';
+        if(diff>100)return'<div style="font-size:9px;color:#ef4444;margin-top:1px;">\u26A0\uFE0F Hai pagato molto di pi\u00f9. Verifica se mancano entry nel file</div>';
+        if(diff>0)return'<div style="font-size:9px;color:#f59e0b;margin-top:1px;">\uD83D\uDD0D Hai pagato un po\' di pi\u00f9 del previsto</div>';
+        return'';
+      }
+      if(type==='netto'){
+        if(diff>0)return'<div style="font-size:9px;color:#10b981;margin-top:1px;">\uD83C\uDFC6 Margini rispettati, ottimo!</div>';
+        if(diff<-100)return'<div style="font-size:9px;color:#ef4444;margin-top:1px;">\uD83D\uDEA8 Margine reale molto sotto la stima. Verifica prezzi di vendita</div>';
+        if(diff<0)return'<div style="font-size:9px;color:#f59e0b;margin-top:1px;">\uD83D\uDCC9 Margine leggermente sotto la stima</div>';
+        return'';
+      }
+      return'';
+    }
 
     const tbody='<tbody>'+allKeys.map(k=>{
       const f=fishMap[k],a=actMap[k];
       const onlyOne=!(f&&a);
       const lbl=(a||f).l;
-      // Valores
       const il_f=f?.il??null, il_a=a?.entrata??null;
       const sp_f=f?.sp??null, sp_a=a?.forn_pesce??null;
       const nn_f=f?.inn??null, nn_a=a?.netto_forn??null;
@@ -1282,21 +1301,41 @@ function renderActual(){
       const mp_f=f?.mp_fish??null, mp_a=a?.mp_full??null;
       const fmtV=v=>v!==null?fmt(v,0,'\u20ac '):'-';
       const fmtPct=v=>v!==null?'<span style="color:'+mpColor(v)+'">'+v.toFixed(1)+'%</span>':'-';
+      // Delta lordo (positivo = bene)
+      const dLordo=il_f!==null&&il_a!==null?il_a-il_f:null;
+      // Delta spesa (negativo = bene = sconto)
+      const dSpesa=sp_f!==null&&sp_a!==null?sp_a-sp_f:null;
+      // Delta netto (positivo = bene)
+      const dNetto=nn_f!==null&&nn_a!==null?nn_a-nn_f:null;
+      const dNettoExtra=nn_f!==null&&netto_full!==null?netto_full-nn_f:null;
+      // Celle delta con commento
+      const cellDelta=(diff,type,inv)=>{
+        if(diff===null)return'-';
+        const isGood=inv?(diff<=0):(diff>=0);
+        const color=isGood?'#10b981':'#ef4444';
+        const sign=diff>=0?'+':'';
+        const pct=inv?(sp_f&&sp_f!==0?diff/Math.abs(sp_f)*100:null):(il_f&&il_f!==0?diff/Math.abs(il_f||nn_f||1)*100:null);
+        const ref=type==='spesa'?sp_f:(type==='lordo'?il_f:nn_f);
+        const pctVal=ref&&ref!==0?diff/Math.abs(ref)*100:null;
+        return'<span style="color:'+color+';font-weight:600;">'+sign+fmt(diff,0,'\u20ac ')+'</span>'+
+          (pctVal!==null?' <span style="font-size:9px;color:'+color+';">'+(pctVal>=0?'+':'')+pctVal.toFixed(1)+'%</span>':'')+
+          deltaComment(diff,type);
+      };
       return'<tr style="'+(onlyOne?'background:#fef9c3;':'')+'">'+ 
         '<td style="font-weight:600;">'+lbl+(onlyOne?' <span style="font-size:9px;color:#f59e0b;">(solo '+(f?'fish':'actual')+')</span>':'')+'</td>'+
         '<td>'+fmtV(il_f)+'</td>'+
         '<td>'+fmtV(il_a)+'</td>'+
-        '<td>'+dCell(il_a,il_f)+'</td>'+
+        '<td>'+cellDelta(dLordo,'lordo',false)+'</td>'+
         '<td>'+fmtV(sp_f)+'</td>'+
         '<td>'+fmtV(sp_a)+'</td>'+
-        '<td>'+dCellInv(sp_a,sp_f)+'</td>'+
+        '<td>'+cellDelta(dSpesa,'spesa',true)+'</td>'+
         '<td>'+fmtV(nn_f)+'</td>'+
         '<td>'+fmtV(nn_a)+'</td>'+
-        '<td>'+dCell(nn_a,nn_f)+'</td>'+
+        '<td>'+cellDelta(dNetto,'netto',false)+'</td>'+
         '<td>'+(benz!==null&&benz>0?fmtV(benz):'-')+'</td>'+
         '<td>'+(altro!==null&&altro>0?fmtV(altro):'-')+'</td>'+
         '<td>'+fmtV(netto_full)+'</td>'+
-        '<td>'+dCell(netto_full,nn_f)+'</td>'+
+        '<td>'+cellDelta(dNettoExtra,'netto',false)+'</td>'+
         '<td>'+fmtPct(mp_f)+'</td>'+
         '<td>'+fmtPct(mp_a)+'</td>'+
       '</tr>';
