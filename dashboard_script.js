@@ -1063,6 +1063,15 @@ function getActualFiltered(){
   if(pVals)d=d.filter(r=>r.tipo!=='Entrata'||pVals.includes(r.pe));
   const gVals=[...(document.getElementById('fGiorno')?.selectedOptions||[])].map(o=>o.value).filter(v=>v!=='tutti');
   if(gVals.length)d=d.filter(r=>gVals.includes(String(r.date.getDay())));
+  // Applica anche il cross-filter trend dalla sezione principale
+  if(crossFilter&&crossFilter.type==='trend'){
+    const k=crossFilter.value;
+    if(PER==='giorno')d=d.filter(r=>r.ds===+k);
+    else if(PER==='settimana')d=d.filter(r=>r.y*100+r.wk===+k);
+    else if(PER==='mese')d=d.filter(r=>r.y*100+r.m===+k);
+    else if(PER==='trimestre')d=d.filter(r=>r.y*10+r.q===+k);
+    else if(PER==='anno')d=d.filter(r=>r.y===+k);
+  }
   return d;
 }
 
@@ -1079,6 +1088,118 @@ function populateActualFilters(){
   });
 }
 
+// ── Helpers per sezione Actual ──────────────────────────────
+function actDeltaCard(lbl,fish,actual,inv){
+  if(fish===null||actual===null)return'';
+  const diff=actual-fish;
+  const pct=fish!==0?diff/Math.abs(fish)*100:null;
+  const good=inv?diff<=0:diff>=0;
+  const neutral=Math.abs(diff)<1;
+  const col=neutral?'#6b7280':good?'#10b981':'#ef4444';
+  const icon=neutral?'\u2713':good?'\uD83D\uDCC8':'\uD83D\uDCC9';
+  const sign=diff>=0?'+':'';
+  const msg=neutral?'Match aspettative':good?(inv?'Risparmio':'Superato previsto'):(inv?'Speso di pi\u00f9':'Sotto previsto');
+  return'<div class="kc" style="border-left:3px solid '+col+';">'+
+    '<div class="kl">'+lbl+'</div>'+
+    '<div class="kv" style="font-size:15px;color:'+col+';">'+icon+' '+sign+fmt(diff,0,'\u20ac ')+'</div>'+
+    (pct!==null?'<div class="ks">'+sign+pct.toFixed(1)+'% &middot; '+msg+'</div>':'<div class="ks">'+msg+'</div>')+
+  '</div>';
+}
+
+function renderActualHighlights(fishPeriods,actPeriods){
+  const el=document.getElementById('actualHighlights');
+  if(!el)return;
+  if(!fishPeriods.length&&!actPeriods.length){el.innerHTML='';return;}
+  const allKeys=[...new Set([...actPeriods.map(p=>String(p.k)),...fishPeriods.map(p=>String(p.k))])].sort((a,b)=>+a-+b);
+  const aMap=Object.fromEntries(actPeriods.map(p=>[String(p.k),p]));
+  const fMap=Object.fromEntries(fishPeriods.map(p=>[String(p.k),p]));
+  // Miglior periodo per netto actual
+  let bestK=null,bestNetto=-Infinity;
+  allKeys.forEach(k=>{const a=aMap[k];if(a&&a.netto_full>bestNetto){bestNetto=a.netto_full;bestK=k;}});
+  const bestLbl=bestK?(aMap[bestK]||fMap[bestK])?.l:'—';
+  const bestF=bestK?fMap[bestK]:null,bestA=bestK?aMap[bestK]:null;
+  // Totali aggregati per i delta card
+  const totF={il:fishPeriods.reduce((s,p)=>s+p.il,0),inn:fishPeriods.reduce((s,p)=>s+p.inn,0),sp:fishPeriods.reduce((s,p)=>s+p.sp,0)};
+  const totA={entrata:actPeriods.reduce((s,p)=>s+p.entrata,0),forn:actPeriods.reduce((s,p)=>s+p.forn_pesce,0),netto_full:actPeriods.reduce((s,p)=>s+p.netto_full,0)};
+  const mpF=totF.il>0?totF.inn/totF.il*100:null;
+  const mpA=totA.entrata>0?totA.netto_full/totA.entrata*100:null;
+  el.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:7px;">'+
+    (bestK?'<div class="kc" style="border-left:3px solid #6366f1;"><div class="kl">MIGLIOR PERIODO (Actual)</div><div class="kv" style="font-size:15px;">'+bestLbl+'</div><div class="ks">Netto \u20ac'+fmt(bestA?.netto_full||0,0)+' &middot; Fish \u20ac'+fmt(bestF?.inn||0,0)+'</div></div>':'')+ 
+    actDeltaCard('\u0394 Incasso lordo',totF.il,totA.entrata,false)+
+    actDeltaCard('\u0394 Spesa fornitori',totF.sp,totA.forn,true)+
+    actDeltaCard('\u0394 Netto (tutto)',totF.inn,totA.netto_full,false)+
+    (mpF!==null&&mpA!==null?actDeltaCard('\u0394 Margine %',mpF,mpA,false).replace('€ ','').replace(fmt(mpA-mpF,0,'\u20ac '),((mpA-mpF)>=0?'+':'')+(mpA-mpF).toFixed(1)+'pp'):'')+ 
+  '</div>';
+}
+
+function renderActualWoW(fishPeriods,actPeriods){
+  const el=document.getElementById('actualWow');
+  if(!el)return;
+  if(fishPeriods.length<2&&actPeriods.length<2){el.innerHTML='';return;}
+  const now=new Date();
+  // Raggruppa per mese e settimana
+  const byM_f={},byM_a={},byW_f={},byW_a={};
+  fishPeriods.forEach(p=>{
+    // Estrai m e y dalla chiave (formato y*100+m per mese)
+    if(PER==='mese'||PER==='giorno'||PER==='settimana'||PER==='anno'){
+      // Usa la label per identificare il periodo
+      const k=p.k;byM_f[k]={k,l:p.l,inn:p.inn,il:p.il,sp:p.sp};
+    }
+  });
+  actPeriods.forEach(p=>{const k=p.k;byM_a[k]={k,l:p.l,entrata:p.entrata,forn:p.forn_pesce,netto:p.netto_full};});
+  // Confronto ultimi 2 periodi completi (escludi corrente)
+  const curKey=(()=>{
+    if(PER==='mese')return now.getFullYear()*100+(now.getMonth()+1);
+    if(PER==='settimana')return now.getFullYear()*100+isoWeek(now);
+    if(PER==='anno')return now.getFullYear();
+    return null;
+  })();
+  const fArr=fishPeriods.filter(p=>p.k!==curKey).sort((a,b)=>+a.k-+b.k);
+  const aArr=actPeriods.filter(p=>p.k!==curKey).sort((a,b)=>+a.k-+b.k);
+  if(fArr.length<2&&aArr.length<2){el.innerHTML='';return;}
+  const fCur=fArr[fArr.length-1],fPrev=fArr[fArr.length-2];
+  const aCur=aArr[aArr.length-1],aPrev=aArr[aArr.length-2];
+  function wowCard(title,cur,prev,isAct){
+    if(!cur||!prev)return'';
+    const inn_c=isAct?cur.netto:cur.inn,inn_p=isAct?prev.netto:prev.inn;
+    const il_c=isAct?cur.entrata:cur.il,il_p=isAct?prev.entrata:prev.il;
+    const sp_c=isAct?cur.forn:cur.sp,sp_p=isAct?prev.forn:prev.sp;
+    const d=delta,fD=fmtDelta;
+    const dInn=d(inn_c,inn_p),dIl=d(il_c,il_p),dSp=d(sp_c,sp_p);
+    const mpC=il_c>0?inn_c/il_c*100:0,mpP=il_p>0?inn_p/il_p*100:0;
+    const dMp=d(mpC,mpP);
+    return'<div class="wow-card">'+
+      '<div class="wow-title">'+title+'</div>'+
+      '<div style="font-size:9px;color:#9ca3af;margin-bottom:6px;"><b style="color:#374151;">'+cur.l+'</b> vs <b style="color:#374151;">'+prev.l+'</b></div>'+
+      '<div class="wow-grid">'+
+        '<div class="wow-item"><span class="wlbl">Incasso lordo</span><span class="wval">'+fD(dIl)+'</span><span style="font-size:9px;color:#9ca3af;">\u20ac'+fmt(il_c,0)+'</span></div>'+
+        '<div class="wow-item"><span class="wlbl">Netto</span><span class="wval">'+fD(dInn)+'</span><span style="font-size:9px;color:#9ca3af;">\u20ac'+fmt(inn_c,0)+'</span></div>'+
+        '<div class="wow-item"><span class="wlbl">Spese forn.</span><span class="wval">'+fD(dSp)+'</span></div>'+
+        '<div class="wow-item"><span class="wlbl">Margine %</span><span class="wval">'+fD(dMp)+'</span><span style="font-size:9px;color:#9ca3af;">'+mpC.toFixed(1)+'%</span></div>'+
+      '</div></div>';
+  }
+  // Confronto Fish vs Actual per stesso periodo
+  function crossCard(fC,aC){
+    if(!fC||!aC)return'';
+    const dIl=delta(aC.entrata,fC.il),dSp=delta(aC.forn,fC.sp),dInn=delta(aC.netto,fC.inn);
+    const mpF=fC.il>0?fC.inn/fC.il*100:0,mpA=aC.entrata>0?aC.netto/aC.entrata*100:0;
+    const dMp=delta(mpA,mpF);
+    const neutral=v=>Math.abs(v?.pct||0)<1;
+    return'<div class="wow-card" style="border-left:3px solid #6366f1;">'+
+      '<div class="wow-title">Fish vs Actual &middot; '+fC.l+'</div>'+
+      '<div class="wow-grid">'+
+        '<div class="wow-item"><span class="wlbl">\u0394 Incasso lordo</span><span class="wval">'+fmtDelta(dIl)+'</span></div>'+
+        '<div class="wow-item"><span class="wlbl">\u0394 Spese forn.</span><span class="wval">'+fmtDelta({pct:dSp.pct,cls:dSp.pct<=0?'wup':'wdn'})+'</span></div>'+
+        '<div class="wow-item"><span class="wlbl">\u0394 Netto</span><span class="wval">'+fmtDelta(dInn)+'</span></div>'+
+        '<div class="wow-item"><span class="wlbl">\u0394 Marg%</span><span class="wval">'+fmtDelta(dMp)+'</span><span style="font-size:9px;color:#9ca3af;">'+mpF.toFixed(1)+'% \u2192 '+mpA.toFixed(1)+'%</span></div>'+
+      '</div></div>';
+  }
+  el.innerHTML=
+    wowCard('Fish: periodo su periodo',fCur,fPrev,false)+
+    wowCard('Actual: periodo su periodo',aCur,aPrev,true)+
+    crossCard(fCur,aCur);
+}
+
 function renderActual(){
   if(!RAW2.length)return;
   const section=document.getElementById('actualSection');
@@ -1090,6 +1211,9 @@ function renderActual(){
   const allKeys=[...new Set([...actPeriods.map(p=>String(p.k)),...fishPeriods.map(p=>String(p.k))])].sort((a,b)=>+a-+b);
   const actMap=Object.fromEntries(actPeriods.map(p=>[String(p.k),p]));
   const fishMap=Object.fromEntries(fishPeriods.map(p=>[String(p.k),p]));
+  // Highlights e WoW
+  renderActualHighlights(fishPeriods,actPeriods);
+  renderActualWoW(fishPeriods,actPeriods);
   const labels=allKeys.map(k=>(actMap[k]||fishMap[k]).l);
   // Totali
   const totFish={il:fishPeriods.reduce((s,p)=>s+p.il,0),inn:fishPeriods.reduce((s,p)=>s+p.inn,0),sp:fishPeriods.reduce((s,p)=>s+p.sp,0)};
@@ -1312,19 +1436,22 @@ function renderActual(){
       // Commento delta lordo
       const cLordo=dLordo===null?'':dLordo>0
         ?'<div style="font-size:9px;color:#10b981;">\uD83D\uDCC8 Hai incassato pi\u00f9 del previsto!</div>'
-        :dLordo<0?'<div style="font-size:9px;color:#ef4444;">\uD83D\uDCC9 Hai incassato meno del previsto</div>':'';
+        :dLordo<0?'<div style="font-size:9px;color:#ef4444;">\uD83D\uDCC9 Hai incassato meno del previsto</div>'
+        :'<div style="font-size:9px;color:#6b7280;">\u2713 Match aspettative</div>';
 
       // Commento delta spesa
       const cSpesa=dSpesa===null?'':dSpesa<0
         ?'<div style="font-size:9px;color:#10b981;">\uD83D\uDCB0 Sconto fornitori!</div>'
         :dSpesa>100?'<div style="font-size:9px;color:#ef4444;">\u26A0\uFE0F Pagato molto di pi\u00f9. Verifica entry mancanti</div>'
-        :dSpesa>0?'<div style="font-size:9px;color:#f59e0b;">\uD83D\uDD0D Pagato un po\' di pi\u00f9</div>':'';
+        :dSpesa>0?'<div style="font-size:9px;color:#f59e0b;">\uD83D\uDD0D Pagato un po\' di pi\u00f9</div>'
+        :'<div style="font-size:9px;color:#6b7280;">\u2713 Match aspettative</div>';
 
       // Commento delta netto (solo fornitori, senza extra)
       const cNetto=dNetto===null?'':dNetto>0
         ?'<div style="font-size:9px;color:#10b981;">\uD83C\uDFC6 Margini rispettati!</div>'
         :dNetto<-100?'<div style="font-size:9px;color:#ef4444;">\uD83D\uDEA8 Margine molto sotto la stima</div>'
-        :dNetto<0?'<div style="font-size:9px;color:#f59e0b;">\uD83D\uDCC9 Margine leggermente sotto</div>':'';
+        :dNetto<0?'<div style="font-size:9px;color:#f59e0b;">\uD83D\uDCC9 Margine leggermente sotto</div>'
+        :'<div style="font-size:9px;color:#6b7280;">\u2713 Match aspettative</div>';
 
       // Commento delta netto con extra — tiene conto di benzina/altro
       let cNettoExtra='';
@@ -1354,22 +1481,29 @@ function renderActual(){
           :dMarg<0?'<div style="font-size:9px;color:#f59e0b;">\uD83D\uDCC9 Margine % leggermente calato</div>':'');
       })();
 
-      // Summary: raccoglie i driver principali
+      // Summary: raccoglie i driver principali con %
       const drivers=[];
       if(dLordo!==null){
-        if(dLordo>0)drivers.push('\u2705 Incasso +\u20ac'+fmt(dLordo,0));
-        else if(dLordo<0)drivers.push('\u274C Incasso -\u20ac'+fmt(Math.abs(dLordo),0));
+        const p=il_f&&il_f!==0?dLordo/Math.abs(il_f)*100:null;
+        const ps=p!==null?' ('+(p>=0?'+':'')+p.toFixed(1)+'%)':'';
+        if(dLordo>0)drivers.push('\u2705 Incasso +'+ fmt(dLordo,0,'\u20ac ')+ps);
+        else if(dLordo<0)drivers.push('\u274C Incasso '+fmt(dLordo,0,'\u20ac ')+ps);
+        else drivers.push('\u2713 Incasso: match');
       }
       if(dSpesa!==null){
-        if(dSpesa<0)drivers.push('\u2705 Sconto forn. +\u20ac'+fmt(Math.abs(dSpesa),0));
-        else if(dSpesa>100)drivers.push('\u26A0\uFE0F Spesa forn. +\u20ac'+fmt(dSpesa,0)+' (verifica file)');
-        else if(dSpesa>0)drivers.push('\uD83D\uDD0D Spesa forn. +\u20ac'+fmt(dSpesa,0));
+        const p=sp_f&&sp_f!==0?dSpesa/Math.abs(sp_f)*100:null;
+        const ps=p!==null?' ('+(p>=0?'+':'')+p.toFixed(1)+'%)':'';
+        if(dSpesa<0)drivers.push('\u2705 Sconto forn. '+fmt(dSpesa,0,'\u20ac ')+ps);
+        else if(dSpesa>100)drivers.push('\u26A0\uFE0F Spesa forn. +'+fmt(dSpesa,0,'\u20ac ')+ps+' (verifica file)');
+        else if(dSpesa>0)drivers.push('\uD83D\uDD0D Spesa forn. +'+fmt(dSpesa,0,'\u20ac ')+ps);
+        else drivers.push('\u2713 Spesa forn.: match');
       }
       if(extraTot>0)drivers.push('\u26FD Extra (benz+altro) -\u20ac'+fmt(extraTot,0));
       if(dMarg!==null){
         if(dMarg>0)drivers.push('\uD83D\uDCC8 Marg% +'+dMarg.toFixed(1)+'pp');
         else if(dMarg<-3)drivers.push('\uD83D\uDCC9 Marg% '+dMarg.toFixed(1)+'pp (significativo)');
         else if(dMarg<0)drivers.push('\uD83D\uDCC9 Marg% '+dMarg.toFixed(1)+'pp');
+        else drivers.push('\u2713 Marg%: match');
       }
       const summaryCell=drivers.length?
         '<div style="font-size:9px;line-height:1.6;color:#374151;">'+drivers.join('<br>')+'</div>':
