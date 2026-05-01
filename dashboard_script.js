@@ -28,11 +28,12 @@ const FISH_NORM=(function(){
     'gamberoni l1':'Gamberoni L1','l1 argentino':'Gamberoni L1',
     'gamberi':'Gamberi',
     // Merluzzo
-    'merluzzi':'Merluzzo','merluzzo 1':'Merluzzo','merluzzo 2':'Merluzzo',
-    'merluzzo prima':'Merluzzo','merluzzo seconda':'Merluzzo Seconda','merluzzo':'Merluzzo',
-    // Orata / Orate
-    'orata':'Orata','orata a':'Orata','orata g':'Orata G',
-    'orate':'Orate','orate a':'Orate','orate g':'Orata G',
+    'merluzzi':'Merluzzo 1','merluzzo 1':'Merluzzo 1','merluzzo prima':'Merluzzo 1','merluzzo':'Merluzzo 1',
+    'merluzzo 2':'Merluzzo Seconda','merluzzo seconda':'Merluzzo Seconda',
+    // Orata / Orate — A e G sono prodotti distinti
+    'orata':'Orata A','orata a':'Orata A',
+    'orate':'Orata A','orate a':'Orata A',
+    'orata g':'Orata G','orate g':'Orata G',
     // Pancasio / Pangasio
     'pancasio':'Pangasio','pangasio':'Pangasio',
     // Pesce spada
@@ -52,7 +53,7 @@ const FISH_NORM=(function(){
     'seppia':'Seppia','seppia 10/20':'Seppia 10/20','seppia cioco':'Seppia Cioco',
     'seppia pulita':'Seppia Pulita','seppia pulita 10/20':'Seppia Pulita 10/20',
     'seppia sporca':'Seppia Sporca',
-    'seppie':'Seppie','seppie 10/20':'Seppie 10/20','seppie 20/40':'Seppie 20/40',
+    'seppie':'Seppie','seppie 10/20':'Seppia Pulita 10/20','seppie 20/40':'Seppie 20/40',
     'seppie cioco':'Seppia Cioco','seppie pulita':'Seppia Pulita',
     'seppie pulita gold':'Seppia Pulita Gold','seppie pulite':'Seppia Pulita',
     'seppie pulite 10/20':'Seppia Pulita 10/20',
@@ -62,7 +63,7 @@ const FISH_NORM=(function(){
     'sogliola(tigri)':'Sogliola Tigri','sogliole tigri':'Sogliola Tigri',
     // Spigola / Spigole
     'spigola':'Spigola','spigola a':'Spigola','spigola g':'Spigola G',
-    'spigole':'Spigole','spigole 2g':'Spigole G','spigole 3g':'Spigole G',
+    'spigole':'Spigola G','spigole 2g':'Spigole 2G','spigole 3g':'Spigole 3G',
     'spigole g':'Spigola G',
     // Baccalà
     'baccala congelato':'Baccalà Congelato','baccalà salato':'Baccalà Salato',
