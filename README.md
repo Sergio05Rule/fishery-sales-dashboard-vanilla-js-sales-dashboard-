@@ -15,7 +15,7 @@ An interactive, client-side KPI dashboard for multi-location fishery sales analy
 - **Total purchase cost** per period
 
 ### Filters
-- **Granularity**: Day · Week · Month · Quarter · Year
+- **Granularity**: Day (with weekday name: Mon 01/04/2026) · Week · Month · Quarter · Year
 - **Cascading multi-select filters**: Year → Month → Week → Location
   - Ctrl+click to select multiple values simultaneously
   - Filters update dynamically based on upstream selections
@@ -29,9 +29,9 @@ An interactive, client-side KPI dashboard for multi-location fishery sales analy
 
 | Chart | Description |
 |-------|-------------|
-| Trend (gross/net + margin %) | Bar chart + dual-line, secondary Y axis for margin |
+| Trend (gross/net + margin %) | Bar chart + dual-line, secondary Y axis for margin. **Clickable** — click a bar to cross-filter all other charts by that period |
 | Revenue by category | Donut with percentage legend |
-| Net margin by fish | Horizontal bars sorted by margin %, labeled with € and % |
+| Net margin by fish | 100% stacked horizontal bars sorted by margin %, labeled with € gross/net. Hover shows margin %, costs %, gross, net, kg sold |
 | Revenue Map | Bubble chart: X = kg sold, Y = margin %, bubble size = gross revenue |
 | Supplier spend | Vertical bars + donut |
 

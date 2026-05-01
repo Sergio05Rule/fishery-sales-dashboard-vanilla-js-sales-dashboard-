@@ -267,6 +267,14 @@ function getFiltered(data){
   if(crossFilter.type==='cat')return data.filter(r=>r.cat===crossFilter.value);
   if(crossFilter.type==='fish')return data.filter(r=>r.psc===crossFilter.value);
   if(crossFilter.type==='supplier')return data.filter(r=>r.forn===crossFilter.value);
+  if(crossFilter.type==='trend'){
+    const k=crossFilter.value;
+    if(PER==='giorno')return data.filter(r=>r.ds===+k);
+    if(PER==='settimana')return data.filter(r=>r.y*100+r.wk===+k);
+    if(PER==='mese')return data.filter(r=>r.y*100+r.m===+k);
+    if(PER==='trimestre')return data.filter(r=>r.y*10+r.q===+k);
+    if(PER==='anno')return data.filter(r=>r.y===+k);
+  }
   return data;
 }
 
@@ -533,16 +541,22 @@ const suppLabelPlugin={
 // ============================================================
 let TC=null,CC=null,FC=null,SC=null,SB=null,SP=null;
 
+const DN_IT=['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+
 function renderTrend(data){
   const G={};
   data.forEach(r=>{
     let k,l;
-    if(PER==='giorno'){k=r.ds;l=String(r.date.getDate()).padStart(2,'0')+'/'+String(r.m).padStart(2,'0')+'/'+r.y;}
+    if(PER==='giorno'){
+      k=r.ds;
+      const dn=DN_IT[r.date.getDay()];
+      l=dn+' '+String(r.date.getDate()).padStart(2,'0')+'/'+String(r.m).padStart(2,'0')+'/'+r.y;
+    }
     else if(PER==='settimana'){k=r.y*100+r.wk;l='S'+String(r.wk).padStart(2,'0')+'-'+r.y;}
     else if(PER==='mese'){k=r.y*100+r.m;l=MN3[r.m]+' '+r.y;}
     else if(PER==='trimestre'){k=r.y*10+r.q;l='Q'+r.q+' '+r.y;}
     else{k=r.y;l=String(r.y);}
-    if(!G[k])G[k]={l,il:0,inn:0};G[k].il+=r.il;G[k].inn+=r.inn;
+    if(!G[k])G[k]={l,il:0,inn:0,date:r.date};G[k].il+=r.il;G[k].inn+=r.inn;
   });
   const ent=Object.entries(G).sort((a,b)=>+a[0]-+b[0]);
   const tl={giorno:'giornaliero',settimana:'settimanale',mese:'mensile',trimestre:'trimestrale',anno:'annuale'};
@@ -561,6 +575,21 @@ function renderTrend(data){
       {label:'Margine %',data:ent.map(e=>e[1].il>0?+(e[1].inn/e[1].il*100).toFixed(1):0),type:'line',borderColor:'#f59e0b',backgroundColor:'transparent',borderWidth:2,borderDash:[4,3],pointRadius:3,pointBackgroundColor:'#f59e0b',fill:false,tension:.3,order:0,yAxisID:'y2'}
     ]},
     options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:18}},
+      onClick(evt,els){
+        if(!els.length){crossFilter=null;render();return;}
+        const idx=els[0].index;
+        const entry=ent[idx];
+        if(!entry)return;
+        const key=entry[0];
+        const val=entry[1];
+        // Cross-filter per periodo cliccato
+        if(crossFilter&&crossFilter.type==='trend'&&crossFilter.value===key){
+          crossFilter=null;
+        } else {
+          crossFilter={type:'trend',value:key,label:val.l,date:val.date};
+        }
+        render();
+      },
       plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{
         label:ctx=>{if(ctx.datasetIndex===2)return'Margine %: '+ctx.parsed.y.toFixed(1)+'%';return ctx.dataset.label+': \u20ac'+ctx.parsed.y.toLocaleString('it-IT');}
       }}},
@@ -693,12 +722,19 @@ function renderFishBar(a){
             title:ctx=>fish[ctx[0].dataIndex].n,
             label:ctx=>{
               const f=fish[ctx.dataIndex];
+              if(!f)return'';
               if(ctx.datasetIndex===0)return'Margine: '+f.mp.toFixed(1)+'% (\u20ac'+Math.round(f.inn).toLocaleString('it-IT')+' netto)';
-              return'Costi: '+(100-f.mp).toFixed(1)+'% (\u20ac'+Math.round(f.sp).toLocaleString('it-IT')+' acquisti)';
+              const costi=f.sp||0;
+              return'Costi: '+(100-f.mp).toFixed(1)+'% (\u20ac'+Math.round(costi).toLocaleString('it-IT')+' acquisti)';
             },
             afterBody:ctx=>{
+              if(!ctx||!ctx[0])return[];
               const f=fish[ctx[0].dataIndex];
-              return['\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500','Lordo: \u20ac'+Math.round(f.il).toLocaleString('it-IT'),'Netto: \u20ac'+Math.round(f.inn).toLocaleString('it-IT'),'Kg venduti: '+f.qv.toFixed(1)+'kg'];
+              if(!f)return[];
+              return['\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500',
+                'Lordo: \u20ac'+Math.round(f.il).toLocaleString('it-IT'),
+                'Netto: \u20ac'+Math.round(f.inn).toLocaleString('it-IT'),
+                'Kg venduti: '+f.qv.toFixed(1)+'kg'];
             }
           }
         }
@@ -907,8 +943,9 @@ function render(){
   renderRawTable(data);
   const msg=document.getElementById('loadMsg');
   if(crossFilter){
-    const labels={cat:'Categoria',fish:'Pesce',supplier:'Fornitore'};
-    msg.innerHTML='<span style="background:#fef3c7;padding:2px 8px;border-radius:4px;color:#92400e;font-weight:500;">Filtro attivo: '+labels[crossFilter.type]+' = '+crossFilter.value+' <span style="cursor:pointer;margin-left:6px;" id="clearCF">\u2715 rimuovi</span></span>';
+    const labels={cat:'Categoria',fish:'Pesce',supplier:'Fornitore',trend:'Periodo'};
+    const val=crossFilter.type==='trend'?crossFilter.label:crossFilter.value;
+    msg.innerHTML='<span style="background:#fef3c7;padding:2px 8px;border-radius:4px;color:#92400e;font-weight:500;">Filtro attivo: '+labels[crossFilter.type]+' = '+val+' <span style="cursor:pointer;margin-left:6px;" id="clearCF">\u2715 rimuovi</span></span>';
     document.getElementById('clearCF').addEventListener('click',()=>{crossFilter=null;render();});
   } else if(RAW.length){msg.textContent='';}
 }
