@@ -188,43 +188,42 @@ The dataset contained **40+ spelling variants** of the same fish due to case dif
 | Raw variants in CSV | Canonical name |
 |--------------------|----------------|
 | `Coda di rospo`, `Code di rospo` | `Coda di Rospo` |
-| `Cozze` | `Cozze` |
 | `Cozza grecia`, `Cozze grecia` | `Cozze Grecia` |
 | `Cozza pelosa` | `Cozze Pelosa` |
 | `Cozza sfusa` | `Cozze Sfusa` |
 | `Cozza treccia`, `Cozze treccia` | `Cozze Treccia` |
 | `Cozze spagna` | `Cozze Spagna` |
-| `Gamberi` | `Gamberi` |
+| `Cozze` | `Cozze` |
 | `Gamberi 20/30` | `Gamberi 20/30` |
 | `Gamberi salipci` | `Gamberi Salipci` |
 | `Gamberoni l1`, `L1 Argentino` | `Gamberoni L1` |
-| `Merluzzi`, `Merluzzo 1`, `Merluzzo prima`, `Merluzzo` | `Merluzzo Prima` |
+| `Gamberi` | `Gamberi` |
+| `Merluzzi`, `Merluzzo`, `Merluzzo 1`, `Merluzzo prima` | `Merluzzo Prima` |
 | `Merluzzo 2`, `Merluzzo seconda` | `Merluzzo Seconda` |
-| `Orata`, `Orata a`, `Orate`, `Orate a` | `Orata A` |
+| `Orata`, `Orate`, `Orata a`, `Orate a` | `Orata A` |
 | `Orata g`, `Orate g` | `Orata G` |
 | `Pancasio`, `Pangasio` | `Pangasio` |
 | `Pesce spada` | `Pesce Spada` |
-| `Persico` | `Persico` *(title-case fallback)* |
 | `Pescatrice`, `Pescatrici` | `Pescatrice` |
-| `Polpo`, `Polpi` | `Polpo` |
+| `Polpi`, `Polpo` | `Polpo` |
 | `Polpo T7` | `Polpo T7` |
 | `Polpo T4` | `Polpo T4` |
-| `Polpo t8`, `Polpi t8`, `Polipi t8` | `Polpo T8` |
+| `Polpi t8`, `Polpo t8`, `Polipi t8` | `Polpo T8` |
 | `Raia`, `Raya`, `Razza` | `Razza` |
 | `Sarde` | `Sarde` |
 | `Scampi` | `Scampi` |
 | `Seppia` | `Seppia` |
-| `Seppia 10/20`, `Seppia pulita 10/20`, `Seppie 10/20`, `Seppie pulite 10/20` | `Seppia Pulita 10/20` |
+| `Seppia 10/20`, `Seppie 10/20`, `Seppia pulita 10/20`, `Seppie pulite 10/20` | `Seppia Pulita 10/20` |
 | `Seppia cioco`, `Seppie cioco` | `Seppia Cioco` |
 | `Seppia pulita`, `Seppie pulita`, `Seppie pulite` | `Seppia Pulita` |
-| `Seppie pulita gold` | `Seppia Pulita Gold` |
 | `Seppia sporca` | `Seppia Sporca` |
 | `Seppie` | `Seppie` |
 | `Seppie 20/40` | `Seppie 20/40` |
+| `Seppie pulita gold` | `Seppia Pulita Gold` |
 | `Sogliola` | `Sogliola` |
 | `Sogliola (lingua)` | `Sogliola Lingua` |
-| `Sogliola (tigri)`, `Sogliola tigri`, `Sogliola(TIgri)`, `Sogliole tigri` | `Sogliola Tigri` |
-| `Spigola`, `Spigola a`, `Spigole` | `Spigola A` |
+| `Sogliola tigri`, `Sogliole tigri`, `Sogliola(TIgri)`, `Sogliola (tigri)` | `Sogliola Tigri` |
+| `Spigola`, `Spigole`, `Spigola a` | `Spigola A` |
 | `Spigola g`, `Spigole g` | `Spigola G` |
 | `Spigole 2g` | `Spigole 2G` |
 | `Spigole 3g` | `Spigole 3G` |
@@ -233,8 +232,8 @@ The dataset contained **40+ spelling variants** of the same fish due to case dif
 | `Vongole` | `Vongole` |
 | `Vongole lupini` | `Vongole Lupini` |
 | `Vongole v.` | `Vongole V.` |
-| `Lupini` | `Lupini` |
 | `Lupini mega` | `Lupini Mega` |
+| `Lupini` | `Lupini` |
 
 Any name not found in the map is title-cased automatically as a fallback (e.g. `pesce spada` → `Pesce Spada`).
 

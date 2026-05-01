@@ -41,7 +41,7 @@ const FISH_NORM=(function(){
     // Pescatrice
     'pescatrici':'Pescatrice','pescatrice':'Pescatrice',
     // Polpo / Polpi
-    'polpo':'Polpo','polpi':'Polpo','polpo  t7':'Polpo T7','polpo t4':'Polpo T4',
+    'polpo':'Polpo','polpi':'Polpo','polpo t7':'Polpo T7','polpo t4':'Polpo T4',
     'polpo t8':'Polpo T8','polpi t8':'Polpo T8','polipi t8':'Polpo T8',
     // Raia / Raya / Razza
     'raia':'Razza','raya':'Razza','razza':'Razza',
