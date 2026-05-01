@@ -177,7 +177,13 @@ Per ogni `Data+Pescheria`:
 - `netto_no_extra` = entrata − fornitori (senza benzina)
 
 ### Nessun doppio conteggio
-I due dataset vengono aggregati separatamente e mostrati affiancati. Non si sommano mai. Usare sempre `aggFishByDay()` per DS1 e `aggActual()` per DS2.
+I due dataset vengono aggregati separatamente e mostrati affiancati. Non si sommano mai. Usare sempre `aggFishByPeriod()` per DS1 e `aggActualByPeriod()` per DS2.
+
+### Soglia di neutralità delta
+Tutti i delta usano una soglia per evitare falsi allarmi su arrotondamenti:
+- **Delta monetari**: neutro se `|diff| < €1` → mostra "✓ Match aspettative" in grigio
+- **Delta margine %**: neutro se `|diff| < 0.5pp`
+- Costanti nel codice: `EPS=1`, `EPS_PCT=0.5`
 
 ### Deduplicazione Dataset 2
 Chiave: `Data|Tipo|DetA|DetB|Cifra` — righe identiche vengono scartate.

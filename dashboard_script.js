@@ -1321,7 +1321,7 @@ function renderActual(){
               const diff=totAct1-totFish1;
               const pct=totFish1>0?diff/totFish1*100:0;
               const sign=diff>=0?'+':'';
-              const arrow=diff<=0?'\u2193 Stai spendendo meno del fish record \u2714':'\u2191 Stai spendendo pi\u00f9 del fish record \u26A0';
+              const arrow=Math.abs(diff)<1?'\u2713 Match aspettative':diff<=0?'\u2193 Stai spendendo meno del fish record \u2714':'\u2191 Stai spendendo pi\u00f9 del fish record \u26A0';
               return[
                 '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500',
                 'Totale Fish (filtri): \u20ac'+Math.round(totFish1).toLocaleString('it-IT'),
@@ -1422,11 +1422,16 @@ function renderActual(){
       const dNettoExtra=nn_f!==null&&netto_full!==null?netto_full-nn_f:null;
       const dMarg=mp_f!==null&&mp_a!==null?mp_a-mp_f:null;
 
+      // Soglia neutralità: differenze < €1 o < 0.5pp sono "match"
+      const EPS=1, EPS_PCT=0.5;
+      const isNeutral=(v,eps)=>v===null||Math.abs(v)<eps;
+
       // Helper delta colorato con %
       const dc=(diff,ref,inv)=>{
         if(diff===null)return'-';
-        const good=inv?diff<=0:diff>=0;
-        const c=good?'#10b981':'#ef4444';
+        const neutral=isNeutral(diff,EPS);
+        const good=neutral?true:(inv?diff<=0:diff>=0);
+        const c=neutral?'#6b7280':good?'#10b981':'#ef4444';
         const s=diff>=0?'+':'';
         const p=ref&&ref!==0?diff/Math.abs(ref)*100:null;
         return'<span style="color:'+c+';font-weight:600;">'+s+fmt(diff,0,'\u20ac ')+'</span>'+
@@ -1434,51 +1439,51 @@ function renderActual(){
       };
 
       // Commento delta lordo
-      const cLordo=dLordo===null?'':dLordo>0
-        ?'<div style="font-size:9px;color:#10b981;">\uD83D\uDCC8 Hai incassato pi\u00f9 del previsto!</div>'
-        :dLordo<0?'<div style="font-size:9px;color:#ef4444;">\uD83D\uDCC9 Hai incassato meno del previsto</div>'
-        :'<div style="font-size:9px;color:#6b7280;">\u2713 Match aspettative</div>';
+      const cLordo=isNeutral(dLordo,EPS)?'<div style="font-size:9px;color:#6b7280;">\u2713 Match aspettative</div>'
+        :dLordo>0?'<div style="font-size:9px;color:#10b981;">\uD83D\uDCC8 Hai incassato pi\u00f9 del previsto!</div>'
+        :'<div style="font-size:9px;color:#ef4444;">\uD83D\uDCC9 Hai incassato meno del previsto</div>';
 
       // Commento delta spesa
-      const cSpesa=dSpesa===null?'':dSpesa<0
-        ?'<div style="font-size:9px;color:#10b981;">\uD83D\uDCB0 Sconto fornitori!</div>'
+      const cSpesa=isNeutral(dSpesa,EPS)?'<div style="font-size:9px;color:#6b7280;">\u2713 Match aspettative</div>'
+        :dSpesa<0?'<div style="font-size:9px;color:#10b981;">\uD83D\uDCB0 Sconto fornitori!</div>'
         :dSpesa>100?'<div style="font-size:9px;color:#ef4444;">\u26A0\uFE0F Pagato molto di pi\u00f9. Verifica entry mancanti</div>'
-        :dSpesa>0?'<div style="font-size:9px;color:#f59e0b;">\uD83D\uDD0D Pagato un po\' di pi\u00f9</div>'
-        :'<div style="font-size:9px;color:#6b7280;">\u2713 Match aspettative</div>';
+        :'<div style="font-size:9px;color:#f59e0b;">\uD83D\uDD0D Pagato un po\' di pi\u00f9</div>';
 
       // Commento delta netto (solo fornitori, senza extra)
-      const cNetto=dNetto===null?'':dNetto>0
-        ?'<div style="font-size:9px;color:#10b981;">\uD83C\uDFC6 Margini rispettati!</div>'
+      const cNetto=isNeutral(dNetto,EPS)?'<div style="font-size:9px;color:#6b7280;">\u2713 Match aspettative</div>'
+        :dNetto>0?'<div style="font-size:9px;color:#10b981;">\uD83C\uDFC6 Margini rispettati!</div>'
         :dNetto<-100?'<div style="font-size:9px;color:#ef4444;">\uD83D\uDEA8 Margine molto sotto la stima</div>'
-        :dNetto<0?'<div style="font-size:9px;color:#f59e0b;">\uD83D\uDCC9 Margine leggermente sotto</div>'
-        :'<div style="font-size:9px;color:#6b7280;">\u2713 Match aspettative</div>';
+        :'<div style="font-size:9px;color:#f59e0b;">\uD83D\uDCC9 Margine leggermente sotto</div>';
 
       // Commento delta netto con extra — tiene conto di benzina/altro
       let cNettoExtra='';
       if(dNettoExtra!==null){
         const extraImpact=extraTot>0?'<div style="font-size:9px;color:#6b7280;margin-top:1px;">\u26FD Benzina+Altro: -\u20ac'+fmt(extraTot,0)+'</div>':'';
-        const nettoSenzaExtra=dNetto; // già calcolato senza extra
-        if(dNettoExtra>0){
+        const nettoSenzaExtra=dNetto;
+        if(isNeutral(dNettoExtra,EPS)){
+          cNettoExtra='<div style="font-size:9px;color:#6b7280;">\u2713 Match aspettative</div>'+extraImpact;
+        } else if(dNettoExtra>0){
           cNettoExtra='<div style="font-size:9px;color:#10b981;">\uD83C\uDFC6 Netto reale positivo</div>'+extraImpact;
         } else if(extraTot>0&&nettoSenzaExtra!==null&&nettoSenzaExtra>=0&&dNettoExtra<0){
-          // Il netto senza extra era ok, ma benzina/altro lo ha portato negativo
           cNettoExtra='<div style="font-size:9px;color:#f59e0b;">\uD83D\uDEA8 Benzina/Altro ha eroso il margine di \u20ac'+fmt(extraTot,0)+'</div>'+extraImpact;
         } else if(dNettoExtra<-100){
           cNettoExtra='<div style="font-size:9px;color:#ef4444;">\uD83D\uDEA8 Margine reale molto sotto la stima</div>'+extraImpact;
-        } else if(dNettoExtra<0){
+        } else {
           cNettoExtra='<div style="font-size:9px;color:#f59e0b;">\uD83D\uDCC9 Margine sotto la stima</div>'+extraImpact;
         }
       }
 
       // Delta Marg%
       const dMargCell=dMarg===null?'-':(()=>{
-        const good=dMarg>=0;
-        const c=good?'#10b981':'#ef4444';
+        const neutral=isNeutral(dMarg,EPS_PCT);
+        const good=neutral?true:dMarg>=0;
+        const c=neutral?'#6b7280':good?'#10b981':'#ef4444';
         const s=dMarg>=0?'+':'';
         return'<span style="color:'+c+';font-weight:600;">'+s+dMarg.toFixed(1)+'pp</span>'+
-          (dMarg>0?'<div style="font-size:9px;color:#10b981;">\uD83D\uDCC8 Margine % migliorato</div>'
+          (neutral?'<div style="font-size:9px;color:#6b7280;">\u2713 Match aspettative</div>'
+          :dMarg>0?'<div style="font-size:9px;color:#10b981;">\uD83D\uDCC8 Margine % migliorato</div>'
           :dMarg<-3?'<div style="font-size:9px;color:#ef4444;">\uD83D\uDCC9 Margine % calato significativamente</div>'
-          :dMarg<0?'<div style="font-size:9px;color:#f59e0b;">\uD83D\uDCC9 Margine % leggermente calato</div>':'');
+          :'<div style="font-size:9px;color:#f59e0b;">\uD83D\uDCC9 Margine % leggermente calato</div>');
       })();
 
       // Summary: raccoglie i driver principali con %
@@ -1486,24 +1491,24 @@ function renderActual(){
       if(dLordo!==null){
         const p=il_f&&il_f!==0?dLordo/Math.abs(il_f)*100:null;
         const ps=p!==null?' ('+(p>=0?'+':'')+p.toFixed(1)+'%)':'';
-        if(dLordo>0)drivers.push('\u2705 Incasso +'+ fmt(dLordo,0,'\u20ac ')+ps);
-        else if(dLordo<0)drivers.push('\u274C Incasso '+fmt(dLordo,0,'\u20ac ')+ps);
-        else drivers.push('\u2713 Incasso: match');
+        if(isNeutral(dLordo,EPS))drivers.push('\u2713 Incasso: match');
+        else if(dLordo>0)drivers.push('\u2705 Incasso +'+fmt(dLordo,0,'\u20ac ')+ps);
+        else drivers.push('\u274C Incasso '+fmt(dLordo,0,'\u20ac ')+ps);
       }
       if(dSpesa!==null){
         const p=sp_f&&sp_f!==0?dSpesa/Math.abs(sp_f)*100:null;
         const ps=p!==null?' ('+(p>=0?'+':'')+p.toFixed(1)+'%)':'';
-        if(dSpesa<0)drivers.push('\u2705 Sconto forn. '+fmt(dSpesa,0,'\u20ac ')+ps);
+        if(isNeutral(dSpesa,EPS))drivers.push('\u2713 Spesa forn.: match');
+        else if(dSpesa<0)drivers.push('\u2705 Sconto forn. '+fmt(dSpesa,0,'\u20ac ')+ps);
         else if(dSpesa>100)drivers.push('\u26A0\uFE0F Spesa forn. +'+fmt(dSpesa,0,'\u20ac ')+ps+' (verifica file)');
-        else if(dSpesa>0)drivers.push('\uD83D\uDD0D Spesa forn. +'+fmt(dSpesa,0,'\u20ac ')+ps);
-        else drivers.push('\u2713 Spesa forn.: match');
+        else drivers.push('\uD83D\uDD0D Spesa forn. +'+fmt(dSpesa,0,'\u20ac ')+ps);
       }
       if(extraTot>0)drivers.push('\u26FD Extra (benz+altro) -\u20ac'+fmt(extraTot,0));
       if(dMarg!==null){
-        if(dMarg>0)drivers.push('\uD83D\uDCC8 Marg% +'+dMarg.toFixed(1)+'pp');
+        if(isNeutral(dMarg,EPS_PCT))drivers.push('\u2713 Marg%: match');
+        else if(dMarg>0)drivers.push('\uD83D\uDCC8 Marg% +'+dMarg.toFixed(1)+'pp');
         else if(dMarg<-3)drivers.push('\uD83D\uDCC9 Marg% '+dMarg.toFixed(1)+'pp (significativo)');
-        else if(dMarg<0)drivers.push('\uD83D\uDCC9 Marg% '+dMarg.toFixed(1)+'pp');
-        else drivers.push('\u2713 Marg%: match');
+        else drivers.push('\uD83D\uDCC9 Marg% '+dMarg.toFixed(1)+'pp');
       }
       const summaryCell=drivers.length?
         '<div style="font-size:9px;line-height:1.6;color:#374151;">'+drivers.join('<br>')+'</div>':

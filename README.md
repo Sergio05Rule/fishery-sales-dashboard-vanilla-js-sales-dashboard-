@@ -60,7 +60,7 @@ Three advanced sections are collapsed by default and expand on click:
 
 | Section | Description |
 |---------|-------------|
-| 📊 Actual vs Fish Record | Compares Dataset 2 (real cash register) against Dataset 1 (fish records). Join key: Date + Location |
+| 📊 Actual vs Fish Record | Compares Dataset 2 (real cash register) against Dataset 1 (fish records). Join key: Date + Location. Includes best period highlights, period-over-period comparison cards, and a detail table with contextual delta comments (neutral threshold: €1 / 0.5pp) |
 | 📅 Pre/Post 10/02/2026 | Analysis of the operational schedule change (which location operates on which day) |
 | 🗃 Raw data | All filtered rows from Dataset 1, sortable, with row counter |
 
@@ -348,6 +348,15 @@ The location is extracted from `Dettaglio B` of `Entrata` rows (e.g. `"Pescheria
 | Extra costs | Not present | Σ `Uscita/Spese` |
 | Net (excl. extras) | Gross − Supplier costs | Entrata − Fornitori |
 | Net (incl. extras) | — | Entrata − Fornitori − Spese |
+
+### Delta neutrality threshold
+
+All delta cells use a neutrality threshold to avoid false alarms on rounding noise:
+- **Monetary deltas** (€): neutral if `|diff| < €1` → shows "✓ Match aspettative" in grey
+- **Margin % deltas** (pp): neutral if `|diff| < 0.5pp` → same neutral treatment
+- **Supplier chart tooltip**: neutral if `|diff| < €1`
+
+This prevents `-€0 -0.0% 📉` false negatives.
 
 ### No double counting
 
