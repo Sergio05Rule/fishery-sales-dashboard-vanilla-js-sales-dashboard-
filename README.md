@@ -1,159 +1,160 @@
-# Dashboard KPI Pescheria
+# Fishery Sales Dashboard
 
-Dashboard analitica per il monitoraggio delle vendite di una pescheria multi-punto. Costruita interamente in HTML + JavaScript vanilla (zero dipendenze backend), carica i dati da un file CSV esportato da Excel/Google Sheets.
-
-![Screenshot dashboard](screenshot.png)
+An interactive, client-side KPI dashboard for multi-location fishery sales analytics. Built with vanilla HTML/JS and Chart.js — no backend, no build step, no framework. Drop in a CSV exported from Excel or Google Sheets and get instant analytics.
 
 ---
 
-## Funzionalità
+## Features
 
-### Analisi e KPI
-- **Incasso lordo / netto** per periodo selezionato
-- **Margine lordo %** aggregato e per singolo pesce
-- **Kg venduti, scarto, rimanenza** con valore immobilizzato
-- **Costo acquisti** totale per periodo
+### KPIs & Metrics
+- **Gross / net revenue** for any selected period
+- **Gross margin %** aggregated and per fish type
+- **Kg sold, waste, leftover stock** with immobilized value
+- **Total purchase cost** per period
 
-### Filtri interattivi
-- **Granularità**: Giorno · Settimana · Mese · Trimestre · Anno
-- **Filtri a cascata multi-selezione**: Anno → Mese → Settimana → Pescheria
-  - Ctrl+click per selezionare più valori contemporaneamente
-  - I filtri si aggiornano dinamicamente in base alle selezioni precedenti
+### Filters
+- **Granularity**: Day · Week · Month · Quarter · Year
+- **Cascading multi-select filters**: Year → Month → Week → Location
+  - Ctrl+click to select multiple values simultaneously
+  - Filters update dynamically based on upstream selections
 
-### Cross-filter (stile Power BI / QuickSight)
-- Clic su qualsiasi grafico (categoria, pesce, fornitore) filtra tutti gli altri
-- Clic sulla riga della tabella filtra i grafici
-- Badge "Filtro attivo" con pulsante di reset
+### Cross-filtering (Power BI / QuickSight style)
+- Click any chart (category, fish, supplier) to filter all others
+- Click a table row to filter all charts
+- Active filter badge with one-click reset
 
-### Grafici
-| Grafico | Descrizione |
-|---------|-------------|
-| Trend lordo/netto + Margine % | Barre + doppia linea, asse Y secondario per il margine |
-| Incasso per categoria | Donut con legenda percentuale |
-| Margine netto per pesce | Barre orizzontali ordinate per margine %, con label €+% |
-| Revenue Map | Bubble chart: asse X = kg venduti, asse Y = margine %, dimensione bolla = incasso lordo |
-| Spesa per fornitore | Barre verticali + donut |
+### Charts
 
-### Highlights automatici
-- **Top 3 / Bottom 3 pesci** per margine %
-- **Miglior giorno / settimana / mese / trimestre / anno** con netto, lordo, volume e margine
+| Chart | Description |
+|-------|-------------|
+| Trend (gross/net + margin %) | Bar chart + dual-line, secondary Y axis for margin |
+| Revenue by category | Donut with percentage legend |
+| Net margin by fish | Horizontal bars sorted by margin %, labeled with € and % |
+| Revenue Map | Bubble chart: X = kg sold, Y = margin %, bubble size = gross revenue |
+| Supplier spend | Vertical bars + donut |
 
-### Analisi temporale
+### Highlights
+- **Top 3 / Bottom 3 fish** by margin %
+- **Best day / week / month / quarter / year** showing net, gross, volume and margin
+
+### Period-over-period analysis
 - **WoW** (Week over Week), **MoM** (Month over Month), **YoY** (Year over Year)
-- Confronta solo periodi **completi** — il periodo corrente (settimana/mese/anno in corso) viene escluso automaticamente
-- Metriche: Δ incasso netto, Δ incasso lordo, Δ volume (kg), Δ margine %, Δ spese
+- Compares only **complete periods** — the current week/month/year is excluded automatically
+- Metrics: Δ net revenue, Δ gross revenue, Δ volume (kg), Δ margin %, Δ costs
 
-### Tabelle
-- **Dettaglio per tipo di pesce**: ordinabile per qualsiasi colonna, a scorrimento, cross-filter su click riga
-- **Dati grezzi**: tutte le righe visibili dopo i filtri attivi, ordinabile, con contatore righe
+### Tables
+- **Fish detail table**: sortable by any column, scrollable, cross-filter on row click
+- **Raw data table**: all rows visible after active filters, sortable, with row counter
 
 ---
 
-## Struttura del progetto
+## Project structure
 
 ```
-pescheria-dashboard/
-├── pescheria_kpi_dashboard.html   # App completa (HTML + CSS inline)
-├── dashboard_script.js            # Logica JS: parsing, dedup, aggregazione, grafici
-├── sample_data.csv                # Dati di esempio (struttura del CSV atteso)
+fishery-sales-dashboard/
+├── pescheria_kpi_dashboard.html   # Full app (HTML + inline CSS)
+├── dashboard_script.js            # JS logic: parsing, dedup, aggregation, charts
+├── sample_data.csv                # Sample data (expected CSV structure)
 ├── README.md
 └── .gitignore
 ```
 
-> **Il file CSV reale non è incluso nel repository** (contiene dati aziendali sensibili).  
-> Usa `sample_data.csv` come riferimento per la struttura attesa.
+> **The real CSV file is not included in this repository** (contains business-sensitive data).  
+> Use `sample_data.csv` as a reference for the expected structure.
 
 ---
 
-## Come usare
+## Usage
 
-### Opzione A — Server HTTP locale (consigliata)
-Il caricamento automatico del CSV richiede un server HTTP (il browser blocca `fetch()` su `file://`).
+### Option A — Local HTTP server (recommended)
+Automatic CSV loading requires an HTTP server (browsers block `fetch()` on `file://`).
 
 ```bash
-# Nella cartella del progetto:
+# In the project folder:
 python3 -m http.server 8000
-# poi apri: http://localhost:8000/pescheria_kpi_dashboard.html
+# then open: http://localhost:8000/pescheria_kpi_dashboard.html
 ```
 
-Il file CSV deve chiamarsi esattamente:
+The CSV file must be named exactly:
 ```
 Pescheria - Abascià Excel - Lavoro - Dataset Pesce.csv
 ```
-e trovarsi nella stessa cartella dell'HTML.
+and placed in the same folder as the HTML file.
 
-### Opzione B — Caricamento manuale
-Apri `pescheria_kpi_dashboard.html` direttamente nel browser e clicca il pulsante **📂 Carica CSV** in alto a destra per selezionare il file manualmente. Funziona anche senza server.
-
----
-
-## Formato CSV atteso
-
-Il file deve essere un CSV con separatore virgola (`,`) e intestazioni nella prima riga. Le colonne rilevanti sono:
-
-| Colonna | Tipo | Esempio |
-|---------|------|---------|
-| `Data` | Data `DD/MM/YYYY` | `03/04/2026` |
-| `Pescheria` | Testo | `Grassano` |
-| `Pesce` | Testo | `Calamari` |
-| `Fornitore` | Testo | `Meridional` |
-| `Categoria` | Testo | `Decongelato` |
-| `Qta. Acquistata per pescheria (Kg)` | Numero IT | `30` |
-| `Prezzo Acquisto al Kg` | Valuta IT | `8,50 €` |
-| `Prezzo Vendita Medio (Kg)` | Valuta IT | `15,00 €` |
-| `Rimanenza o non venduto (Kg)` | Numero IT | `3,6` |
-| `Gettato (Kg)` | Numero IT | `0` |
-| `Scarto Totale Lotto (automatico)` | Numero IT | `3,6` |
-| `Spese` | Valuta IT | `255,00 €` |
-| `Incasso (lordo)` | Valuta IT | `396,00 €` |
-| `Incasso (netto)` | Valuta IT | `141,00 €` |
-| `Margine Lordo (%)` | Percentuale IT | `35,61%` |
-| `Qta. Venduta (Kg)` | Numero IT | `26,4` |
-| `ROI Pesce %` | Percentuale IT | `43,33%` |
-
-> I numeri usano la **virgola come separatore decimale** e il **punto come separatore migliaia** (formato italiano). I valori monetari possono avere il simbolo `€` prima o dopo il numero.
+### Option B — Manual file load
+Open `pescheria_kpi_dashboard.html` directly in the browser and click the **📂 Load CSV** button in the top-right corner. Works without a server.
 
 ---
 
-## Manipolazione dei dati
+## Expected CSV format
 
-### 1. Deduplicazione automatica
+The file must be a comma-separated CSV with column headers in the first row. Relevant columns:
 
-Il dataset originale conteneva **blocchi giornalieri duplicati** — interi giorni di vendita inseriti due volte nel file sorgente (probabilmente per un doppio export o copia-incolla in Excel). Su 2.002 righe originali, 279 erano duplicati.
+| Column | Type | Example |
+|--------|------|---------|
+| `Data` | Date `DD/MM/YYYY` | `03/04/2026` |
+| `Pescheria` | Text | `Grassano` |
+| `Pesce` | Text | `Calamari` |
+| `Fornitore` | Text | `Meridional` |
+| `Categoria` | Text | `Decongelato` |
+| `Qta. Acquistata per pescheria (Kg)` | IT number | `30` |
+| `Prezzo Acquisto al Kg` | IT currency | `8,50 €` |
+| `Prezzo Vendita Medio (Kg)` | IT currency | `15,00 €` |
+| `Rimanenza o non venduto (Kg)` | IT number | `3,6` |
+| `Gettato (Kg)` | IT number | `0` |
+| `Scarto Totale Lotto (automatico)` | IT number | `3,6` |
+| `Spese` | IT currency | `255,00 €` |
+| `Incasso (lordo)` | IT currency | `396,00 €` |
+| `Incasso (netto)` | IT currency | `141,00 €` |
+| `Margine Lordo (%)` | IT percentage | `35,61%` |
+| `Qta. Venduta (Kg)` | IT number | `26,4` |
+| `ROI Pesce %` | IT percentage | `43,33%` |
 
-**Chiave primaria usata per la deduplicazione** (9 campi):
+> Numbers use **comma as decimal separator** and **period as thousands separator** (Italian format). Currency values may have the `€` symbol before or after the number.
+
+---
+
+## Data pipeline
+
+### 1. Automatic deduplication
+
+The source dataset contained **duplicate day-blocks** — entire days of sales inserted twice (likely from a double export or copy-paste in Excel). Out of 2,002 original rows, 279 were duplicates.
+
+**Primary key used for deduplication** (9 fields):
 
 ```
-Data · Pescheria · Pesce (normalizzato) · Fornitore · Categoria ·
-Qta. Acquistata · Prezzo Acquisto · Prezzo Vendita · Rimanenza
+Date · Location · Fish (normalized) · Supplier · Category ·
+Qty Purchased · Purchase Price · Sale Price · Leftover Qty
 ```
 
-La logica è implementata in `buildFromCSV()` in `dashboard_script.js`:
+Implementation in `buildFromCSV()` inside `dashboard_script.js`:
 
 ```javascript
 const pk = [
-  d.toISOString().slice(0,10),  // Data
-  pe,                            // Pescheria
-  psc,                           // Pesce (già normalizzato)
-  forn,                          // Fornitore
-  cat,                           // Categoria
-  (row[iQa]||'').trim(),         // Qta. Acquistata
-  (row[iPa]||'').trim(),         // Prezzo Acquisto
-  (row[iPv]||'').trim(),         // Prezzo Vendita
-  (row[iRim]||'').trim(),        // Rimanenza
+  d.toISOString().slice(0, 10),  // Date
+  pe,                             // Location
+  psc,                            // Fish (already normalized)
+  forn,                           // Supplier
+  cat,                            // Category
+  (row[iQa] || '').trim(),        // Qty Purchased
+  (row[iPa] || '').trim(),        // Purchase Price
+  (row[iPv] || '').trim(),        // Sale Price
+  (row[iRim] || '').trim(),       // Leftover Qty
 ].join('|');
 
-if (seenPK.has(pk)) continue;   // scarta il duplicato
+if (seenPK.has(pk)) continue;    // skip duplicate
 seenPK.add(pk);
 ```
 
-**Perché questa chiave e non tutti i campi?**  
-Usare tutti i 28 campi come chiave avrebbe preservato righe con la stessa transazione ma un campo irrilevante diverso (es. campo `Meteo` vuoto vs "Sole"). La chiave a 9 campi identifica univocamente una transazione commerciale reale.
+The deduplication runs **in memory at load time** — the source CSV is never modified. Every time you reload the same file, duplicates are removed automatically.
 
-**Blocchi duplicati trovati nel dataset originale:**
+**Why these 9 fields and not all 28?**  
+Using all fields as the key would keep rows with the same transaction but a trivially different field (e.g. `Meteo` empty vs "Sole"). The 9-field key uniquely identifies a real commercial transaction.
 
-| Data | Pescheria | Righe duplicate |
-|------|-----------|----------------:|
+**Duplicate blocks found in the original dataset:**
+
+| Date | Location | Duplicate rows |
+|------|----------|---------------:|
 | 06/03/2026 | Grassano + Brigante | 34 |
 | 09/03/2026 | Grassano | 8 |
 | 10/03/2026 | Grottole | 11 |
@@ -171,19 +172,19 @@ Usare tutti i 28 campi come chiave avrebbe preservato righe con la stessa transa
 | 02/04/2026 | Grottole | 15 |
 | 03/04/2026 | Grassano | 13 |
 | 27/02/2026 | Grassano | 1 |
-| **Totale** | | **279** |
+| **Total** | | **279** |
 
-> **In alternativa**, puoi pulire il file alla fonte in Excel/Google Sheets:  
-> `Dati → Rimuovi duplicati` selezionando le 9 colonne della chiave primaria.
+> **Alternative**: clean the file at source in Excel/Google Sheets using  
+> `Data → Remove Duplicates`, selecting the same 9 columns as the key.
 
 ---
 
-### 2. Normalizzazione nomi pesce
+### 2. Fish name normalization
 
-Il dataset conteneva **oltre 40 varianti** dello stesso pesce dovute a differenze di maiuscole, abbreviazioni, errori di battitura e nomi alternativi. La funzione `FISH_NORM()` in `dashboard_script.js` mappa tutte le varianti al nome canonico:
+The dataset contained **40+ spelling variants** of the same fish due to case differences, abbreviations, typos and alternative names. The `FISH_NORM()` function maps all variants to a canonical name:
 
-| Varianti nel CSV | Nome canonico |
-|-----------------|---------------|
+| Variants in CSV | Canonical name |
+|----------------|----------------|
 | `Pancasio`, `Pangasio` | `Pangasio` |
 | `Raia`, `Raya`, `Razza` | `Razza` |
 | `Polpo t8`, `Polpi t8`, `Polipi t8` | `Polpo T8` |
@@ -194,28 +195,27 @@ Il dataset conteneva **oltre 40 varianti** dello stesso pesce dovute a differenz
 | `Gamberoni l1`, `L1 Argentino` | `Gamberoni L1` |
 | `Merluzzi`, `Merluzzo 1`, `Merluzzo 2`, `Merluzzo prima` | `Merluzzo` |
 | `Pescatrici`, `Pescatrice` | `Pescatrice` |
-| `Pesce spada`, `Pesce Spada` | `Pesce Spada` |
 | `Spigole g`, `Spigola g` | `Spigola G` |
 | `Baccala Congelato` | `Baccalà Congelato` |
-| ... (40+ varianti totali) | |
+| *(40+ variants total)* | |
 
-La normalizzazione avviene **prima** della deduplicazione, così righe con lo stesso pesce scritto in modo diverso vengono correttamente identificate come duplicati.
+Normalization runs **before** deduplication, so rows with the same fish spelled differently are correctly identified as duplicates.
 
 ---
 
-### 3. Parsing numerico formato italiano
+### 3. Italian number format parsing
 
-Il CSV usa il formato numerico italiano (virgola decimale, punto migliaia, simbolo €). La funzione `parseNum()` gestisce tutti i formati presenti:
+The CSV uses Italian number formatting (comma decimal, period thousands, € symbol). The `parseNum()` function handles all formats present in the file:
 
 ```javascript
-// Gestisce: "8,50 €" / "€ 141,00" / "35,61%" / "26,4" / ""
+// Handles: "8,50 €" / "€ 141,00" / "35,61%" / "26,4" / ""
 function parseNum(s) {
   let v = String(s).trim()
     .replace(/€/g, '')
     .replace(/\s/g, '')
     .replace(/%/g, '')
-    .replace(/\./g, '')   // rimuove separatore migliaia
-    .replace(/,/g, '.');  // converte decimale IT → EN
+    .replace(/\./g, '')   // remove thousands separator
+    .replace(/,/g, '.');  // convert IT decimal → EN decimal
   const n = parseFloat(v);
   return isFinite(n) ? n : 0;
 }
@@ -223,43 +223,58 @@ function parseNum(s) {
 
 ---
 
-### 4. Formule di calcolo
+### 4. Calculation formulas
 
-I valori economici vengono letti **direttamente dal CSV** (già calcolati da Excel) senza ricalcolo, per garantire coerenza con il file sorgente:
+Economic values are read **directly from the CSV** (already computed by Excel) rather than recalculated, ensuring consistency with the source file:
 
-| Metrica | Formula Excel | Campo CSV |
-|---------|--------------|-----------|
-| Spese | `Qa × Pa` | `Spese` |
-| Incasso lordo | `Qv × Pv` | `Incasso (lordo)` |
-| Incasso netto | `Incasso lordo − Spese` | `Incasso (netto)` |
-| Margine % | `Netto / Lordo × 100` | `Margine Lordo (%)` |
-| ROI % | `(Pv − Pa) / Pv × 100` | `ROI Pesce %` |
-| Qv | `Qa − Scarto − Rimanenza − Gettato` | `Qta. Venduta (Kg)` |
+| Metric | Excel formula | CSV column |
+|--------|--------------|------------|
+| Purchase cost | `Qty × Purchase price` | `Spese` |
+| Gross revenue | `Qty sold × Sale price` | `Incasso (lordo)` |
+| Net revenue | `Gross − Purchase cost` | `Incasso (netto)` |
+| Margin % | `Net / Gross × 100` | `Margine Lordo (%)` |
+| ROI % | `(Sale price − Purchase price) / Sale price × 100` | `ROI Pesce %` |
+| Qty sold | `Qty purchased − Waste − Leftover − Discarded` | `Qta. Venduta (Kg)` |
 
-Il **margine % aggregato** (per pesce su più giorni/pescherie) viene ricalcolato come media ponderata per volume:
+**Aggregated margin % (volume-weighted average)**
+
+When showing the margin % for a fish across multiple days or locations, a simple average of row percentages would give equal weight to large and small batches — which is economically incorrect.
+
+Example with two batches of different sizes:
+
+| Batch | Gross | Net | Row margin % |
+|-------|------:|----:|-------------:|
+| Small batch | €100 | €20 | 20% |
+| Large batch | €900 | €360 | 40% |
+| **Total** | **€1,000** | **€380** | |
+
+- Simple average: (20 + 40) / 2 = **30%** ← wrong, treats both batches equally
+- Volume-weighted: 380 / 1,000 × 100 = **38%** ← correct, the large batch (€900) carries 9× more weight
+
+The dashboard always uses the volume-weighted method:
+
+```javascript
+mp: f.il > 0 ? f.inn / f.il * 100 : 0   // Σ net / Σ gross × 100
 ```
-Margine % aggregato = Σ(Incasso netto) / Σ(Incasso lordo) × 100
-```
-Questo è più corretto della media semplice delle percentuali di riga, che darebbe peso uguale a lotti di dimensioni diverse.
 
 ---
 
-## Dipendenze
+## Dependencies
 
-| Libreria | Versione | Uso |
-|----------|----------|-----|
-| [Chart.js](https://www.chartjs.org/) | 4.4.1 | Tutti i grafici |
+| Library | Version | Purpose |
+|---------|---------|---------|
+| [Chart.js](https://www.chartjs.org/) | 4.4.1 | All charts |
 
-Caricata via CDN (`cdnjs.cloudflare.com`). Nessun'altra dipendenza — niente Node.js, niente build step, niente framework.
-
----
-
-## Compatibilità browser
-
-Testato su Chrome 120+, Firefox 121+, Safari 17+. Richiede ES2020 (optional chaining, nullish coalescing).
+Loaded via CDN. No Node.js, no build step, no other dependencies.
 
 ---
 
-## Licenza
+## Browser compatibility
 
-MIT — libero uso, modifica e distribuzione con attribuzione.
+Tested on Chrome 120+, Firefox 121+, Safari 17+. Requires ES2020.
+
+---
+
+## License
+
+MIT — free to use, modify and distribute with attribution.
