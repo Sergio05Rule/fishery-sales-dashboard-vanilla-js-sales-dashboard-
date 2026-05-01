@@ -205,10 +205,10 @@ The dataset contained **40+ spelling variants** of the same fish due to case dif
 | `Pancasio`, `Pangasio` | `Pangasio` |
 | `Pesce spada` | `Pesce Spada` |
 | `Pescatrice`, `Pescatrici` | `Pescatrice` |
-| `Polpi`, `Polpo`, `Polipo` | `Polipo` |
-| `Polpo T7` | `Polipo T7` |
-| `Polpo T4` | `Polipo T4` |
-| `Polpi t8`, `Polpo t8`, `Polipi t8` | `Polipo T8` |
+| `Polpi`, `Polpo`, `Polipo` | `Polpo` |
+| `Polpo T7` | `Polpo T7` |
+| `Polpo T4` | `Polpo T4` |
+| `Polpi t8`, `Polpo t8`, `Polipi t8` | `Polpo T8` |
 | `Raia`, `Raya`, `Razza` | `Razza` |
 | `Sarde` | `Sarde` |
 | `Scampi` | `Scampi` |

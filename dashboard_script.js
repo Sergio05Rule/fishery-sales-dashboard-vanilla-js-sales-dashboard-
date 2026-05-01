@@ -40,10 +40,10 @@ const FISH_NORM=(function(){
     'pesce spada':'Pesce Spada',
     // Pescatrice
     'pescatrici':'Pescatrice','pescatrice':'Pescatrice',
-    // Polpo / Polpi / Polipo — tutti Polipo
-    'polpo':'Polipo','polpi':'Polipo','polipo':'Polipo',
-    'polpo t7':'Polipo T7','polpo t4':'Polipo T4',
-    'polpo t8':'Polipo T8','polpi t8':'Polipo T8','polipi t8':'Polipo T8',
+    // Polpo / Polpi / Polipo → Polpo
+    'polpo':'Polpo','polpi':'Polpo','polipo':'Polpo',
+    'polpo t7':'Polpo T7','polpo t4':'Polpo T4',
+    'polpo t8':'Polpo T8','polpi t8':'Polpo T8','polipi t8':'Polpo T8',
     // Raia / Raya / Razza
     'raia':'Razza','raya':'Razza','razza':'Razza',
     // Sarde
@@ -195,10 +195,11 @@ function buildFromCSV(text){
 // FILTER DROPDOWNS — multi-select
 // ============================================================
 const $anno=document.getElementById('fAnno'),$mese=document.getElementById('fMese'),
-      $sett=document.getElementById('fSett'),$pesch=document.getElementById('fPesch');
+      $sett=document.getElementById('fSett'),$pesch=document.getElementById('fPesch'),
+      $forn=document.getElementById('fForn');
 
 (function applyMultiSelectStyles(){
-  [{el:$anno,w:'100px'},{el:$mese,w:'120px'},{el:$sett,w:'110px'},{el:$pesch,w:'120px'}].forEach(({el,w})=>{
+  [{el:$anno,w:'100px'},{el:$mese,w:'120px'},{el:$sett,w:'110px'},{el:$pesch,w:'120px'},{el:$forn,w:'110px'}].forEach(({el,w})=>{
     el.setAttribute('multiple','multiple');
     el.setAttribute('size','4');
     el.style.cssText='min-width:'+w+';max-width:180px;border:1px solid #d1d5db;border-radius:6px;background:#fff;color:#1a1a1a;font-size:11px;padding:2px 4px;outline:none;cursor:pointer;';
@@ -217,6 +218,8 @@ function getMultiVals(sel){
 function populateFilters(){
   const pes=[...new Set(RAW.map(r=>r.pe))].sort();
   $pesch.innerHTML='<option value="tutti" selected>Tutte</option>'+pes.map(p=>'<option value="'+p+'">'+p+'</option>').join('');
+  const forns=[...new Set(RAW.map(r=>r.forn))].sort();
+  $forn.innerHTML='<option value="tutti" selected>Tutti</option>'+forns.map(f=>'<option value="'+f+'">'+f+'</option>').join('');
   const years=[...new Set(RAW.map(r=>r.y))].sort((a,b)=>a-b);
   $anno.innerHTML='<option value="tutti" selected>Tutti</option>'+years.map(y=>'<option value="'+y+'">'+y+'</option>').join('');
   updateMeseOpts();updateSettOpts();
@@ -245,6 +248,7 @@ $anno.addEventListener('change',()=>{updateMeseOpts();updateSettOpts();crossFilt
 $mese.addEventListener('change',()=>{updateSettOpts();crossFilter=null;render();});
 $sett.addEventListener('change',()=>{crossFilter=null;render();});
 $pesch.addEventListener('change',()=>{crossFilter=null;render();});
+$forn.addEventListener('change',()=>{crossFilter=null;render();});
 
 // ============================================================
 // DATA ACCESS
@@ -252,6 +256,7 @@ $pesch.addEventListener('change',()=>{crossFilter=null;render();});
 function getData(){
   let d=RAW;
   const pVals=getMultiVals($pesch);if(pVals)d=d.filter(r=>pVals.includes(r.pe));
+  const fVals=getMultiVals($forn);if(fVals)d=d.filter(r=>fVals.includes(r.forn));
   const aVals=getMultiVals($anno);if(aVals)d=d.filter(r=>aVals.includes(String(r.y)));
   const mVals=getMultiVals($mese);if(mVals)d=d.filter(r=>mVals.includes(r.m+'-'+r.y));
   const sVals=getMultiVals($sett);if(sVals)d=d.filter(r=>sVals.includes(r.wk+'-'+r.y));
