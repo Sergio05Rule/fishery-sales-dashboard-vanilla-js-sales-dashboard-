@@ -75,6 +75,11 @@ select:focus{border-color:#3b82f6;box-shadow:0 0 0 2px rgba(59,130,246,.12);}
 /* Table */
 .dtbl{width:100%;border-collapse:collapse;font-size:11px;}
 .dtbl th{text-align:left;padding:7px 9px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;white-space:nowrap;font-size:10px;cursor:pointer;user-select:none;position:sticky;top:0;background:#fff;z-index:1;}
+/* Tooltip su header tabella */
+.dtbl th[data-tip]{cursor:default;}
+.dtbl th[data-tip] .tip-icon{cursor:help;color:#9ca3af;font-size:9px;margin-left:2px;position:relative;display:inline-block;}
+.dtbl th[data-tip] .tip-icon::after{content:attr(data-tip);position:absolute;bottom:120%;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;font-size:10px;font-weight:400;padding:5px 8px;border-radius:5px;white-space:normal;width:220px;z-index:100;pointer-events:none;opacity:0;transition:opacity .15s;line-height:1.4;}
+.dtbl th[data-tip] .tip-icon:hover::after{opacity:1;}
 .dtbl th:hover{color:#2563eb;}
 .dtbl th .arrow{font-size:9px;margin-left:2px;color:#9ca3af;}
 .dtbl th.sorted .arrow{color:#2563eb;}
@@ -214,7 +219,7 @@ select:focus{border-color:#3b82f6;box-shadow:0 0 0 2px rgba(59,130,246,.12);}
       <div class="stl">Spese extra (benzina, altro) — solo Dataset Actual</div>
       <div style="position:relative;height:180px;"><canvas id="actSpeseChart"></canvas></div>
     </div>
-    <div style="overflow-x:auto;">
+    <div style="overflow-x:auto;max-height:380px;overflow-y:auto;">
       <table class="dtbl" id="actTable"></table>
     </div>
   </div>

@@ -228,7 +228,21 @@ fishery-sales-dashboard/
 
 ---
 
-## 9. Checklist prima di ogni commit
+## 9. Tabelle a scorrimento
+
+Tutte le tabelle della dashboard hanno `max-height` e `overflow-y: auto` per lo scroll verticale, e `overflow-x: auto` per lo scroll orizzontale. Gli header hanno `position: sticky; top: 0` per rimanere visibili durante lo scroll.
+
+Tabelle con scroll attivo:
+- `#tbl` — Dettaglio per tipo di pesce (max-height: 380px)
+- `#rawTbl` — Dati grezzi (max-height: 340px, in sezione collassabile)
+- `#actTable` — Actual vs Fish Record (max-height: 380px, in sezione collassabile)
+- `#ppTable` — Pre/Post 10/02/2026 (overflow-x: auto)
+
+Quando si aggiunge una nuova tabella, aggiungere sempre `max-height` e `overflow-y: auto` al wrapper div.
+
+---
+
+## 10. Checklist prima di ogni commit
 
 - [ ] `node --check dashboard_script.js` → nessun errore di sintassi
 - [ ] Se modificata la mappa pesce → verifica allineamento JS/README (script sezione 2)

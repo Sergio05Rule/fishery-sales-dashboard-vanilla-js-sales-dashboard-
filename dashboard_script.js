@@ -1162,27 +1162,27 @@ function renderActual(){
   if(ACT2)ACT2.destroy();
   const c2=document.getElementById('actFornChart');
   if(c2){
-    // DS1: stacked per fornitore (colonna Fornitore × Spese)
-    const forns=fishPeriods._forns||[];
+    // Ordine fisso fornitori (stesso in DS1 e DS2)
+    const FORN_ORDER=['Meridional','Pinuccio','Brezza','Franco','Ottavio'];
     const fornColors={'Meridional':'#3b82f6','Pinuccio':'#10b981','Brezza':'#f59e0b','Franco':'#a855f7','Ottavio':'#06b6d4'};
-    const ds1Datasets=forns.map(f=>({
+    // Totali per il tooltip afterBody
+    const totFish1=FORN_ORDER.reduce((s,f)=>s+fishPeriods.reduce((ss,p)=>ss+(p.byForn?.[f]||0),0),0);
+    const totAct1=actPeriods.reduce((s,p)=>s+p.forn_pesce,0);
+    const totBenz=actPeriods.reduce((s,p)=>s+p.benzina,0);
+    const totAltro=actPeriods.reduce((s,p)=>s+p.altro,0);
+    const ds1Datasets=FORN_ORDER.map(f=>({
       label:'Fish: '+f,
       data:allKeys.map(k=>Math.round(fishMap[k]?.byForn?.[f]||0)),
       backgroundColor:(fornColors[f]||'#9ca3af')+'66',
       borderColor:fornColors[f]||'#9ca3af',
       borderWidth:1,borderRadius:0,stack:'fish'
     }));
-    // DS2: stacked fornitori pesce → benzina → altro (tutte le uscite)
-    const ds2Forn=FORNITORI_PESCE.map(f=>({
+    const ds2Forn=FORN_ORDER.map(f=>({
       label:'Actual: '+f,
-      data:allKeys.map(k=>{
-        const a=actMap[k];if(!a)return 0;
-        // somma uscite per questo fornitore nel periodo
-        return Math.round(a['_byForn']?.[f]||0);
-      }),
+      data:allKeys.map(k=>Math.round(actMap[k]?._byForn?.[f]||0)),
       backgroundColor:(fornColors[f]||'#9ca3af')+'99',
       borderColor:fornColors[f]||'#9ca3af',
-      borderWidth:1,borderDash:[3,2],borderRadius:0,stack:'actual'
+      borderWidth:1,borderRadius:0,stack:'actual'
     }));
     const ds2Extra=[
       {label:'Actual: Benzina',data:allKeys.map(k=>Math.round(actMap[k]?.benzina||0)),backgroundColor:'rgba(239,68,68,.35)',borderColor:'#ef4444',borderWidth:1,borderRadius:0,stack:'actual'},
@@ -1191,7 +1191,17 @@ function renderActual(){
     ACT2=new Chart(c2,{type:'bar',data:{labels,datasets:[...ds1Datasets,...ds2Forn,...ds2Extra]},
       options:{responsive:true,maintainAspectRatio:false,
         plugins:{legend:{position:'top',labels:{font:{size:9},boxWidth:10}},
-          tooltip:{mode:'index',intersect:false,callbacks:{label:ctx=>ctx.dataset.label+': \u20ac'+ctx.parsed.y.toLocaleString('it-IT')}}},
+          tooltip:{mode:'index',intersect:false,callbacks:{
+            label:ctx=>ctx.dataset.label+': \u20ac'+ctx.parsed.y.toLocaleString('it-IT'),
+            afterBody:()=>[
+              '\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500',
+              'Totale Fish (filtri): \u20ac'+Math.round(totFish1).toLocaleString('it-IT'),
+              'Totale Actual fornitori: \u20ac'+Math.round(totAct1).toLocaleString('it-IT'),
+              'Totale Benzina: \u20ac'+Math.round(totBenz).toLocaleString('it-IT'),
+              'Totale Altro: \u20ac'+Math.round(totAltro).toLocaleString('it-IT'),
+              '\u0394 Fish vs Actual: \u20ac'+(totAct1-totFish1>=0?'+':'')+Math.round(totAct1-totFish1).toLocaleString('it-IT'),
+            ]
+          }}},
         scales:{x:{grid:{display:false},ticks:{font:{size:9},maxRotation:55}},
           y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:9},callback:v=>v>=1000?'\u20ac'+(v/1000).toFixed(0)+'k':'\u20ac'+v}}}
       }});
@@ -1199,16 +1209,16 @@ function renderActual(){
   if(ACT3)ACT3.destroy();
   const c3=document.getElementById('actNettoChart');
   if(c3)ACT3=new Chart(c3,{type:'bar',data:{labels,datasets:[
-    {label:'Netto Fish (Pesce)',data:allKeys.map(k=>Math.round(fishMap[k]?.inn||0)),backgroundColor:'#3b82f6',borderColor:'#2563eb',borderWidth:1,borderRadius:3},
-    {label:'Netto Actual (solo forn.)',data:allKeys.map(k=>Math.round(actMap[k]?.netto_forn||0)),backgroundColor:'#10b981',borderColor:'#059669',borderWidth:1,borderRadius:3},
-    {label:'Netto Actual (tutto)',data:allKeys.map(k=>Math.round(actMap[k]?.netto_full||0)),backgroundColor:'#b45309',borderColor:'#92400e',borderWidth:1,borderRadius:3}
+    {label:'Netto Fish (Pesce)',data:allKeys.map(k=>Math.round(fishMap[k]?.inn||0)),backgroundColor:'rgba(59,130,246,.5)',borderColor:'#3b82f6',borderWidth:1,borderRadius:3,order:2},
+    {label:'Netto Actual (solo forn.)',data:allKeys.map(k=>Math.round(actMap[k]?.netto_forn||0)),backgroundColor:'rgba(16,185,129,.5)',borderColor:'#10b981',borderWidth:1,borderRadius:3,order:2},
+    {label:'Netto Actual (tutto)',data:allKeys.map(k=>Math.round(actMap[k]?.netto_full||0)),type:'line',borderColor:'#b45309',backgroundColor:'rgba(180,83,9,.06)',borderWidth:2,pointRadius:3,pointBackgroundColor:'#b45309',fill:true,tension:.3,order:1}
   ]},options:bOpts()});
   if(ACT4)ACT4.destroy();
   const c4=document.getElementById('actMargChart');
   if(c4){ACT4=new Chart(c4,{type:'bar',data:{labels,datasets:[
-    {label:'Marg% Fish (Pesce)',data:allKeys.map(k=>+(fishMap[k]?.mp_fish||0).toFixed(1)),backgroundColor:'#3b82f6',borderColor:'#2563eb',borderWidth:1,borderRadius:3},
-    {label:'Marg% Actual (solo forn.)',data:allKeys.map(k=>+(actMap[k]?.mp_forn||0).toFixed(1)),backgroundColor:'#10b981',borderColor:'#059669',borderWidth:1,borderRadius:3},
-    {label:'Marg% Actual (tutto)',data:allKeys.map(k=>+(actMap[k]?.mp_full||0).toFixed(1)),backgroundColor:'#b45309',borderColor:'#92400e',borderWidth:1,borderRadius:3}
+    {label:'Marg% Fish (Pesce)',data:allKeys.map(k=>+(fishMap[k]?.mp_fish||0).toFixed(1)),backgroundColor:'rgba(59,130,246,.5)',borderColor:'#3b82f6',borderWidth:1,borderRadius:3,order:2},
+    {label:'Marg% Actual (solo forn.)',data:allKeys.map(k=>+(actMap[k]?.mp_forn||0).toFixed(1)),backgroundColor:'rgba(16,185,129,.5)',borderColor:'#10b981',borderWidth:1,borderRadius:3,order:2},
+    {label:'Marg% Actual (tutto)',data:allKeys.map(k=>+(actMap[k]?.mp_full||0).toFixed(1)),type:'line',borderColor:'#b45309',backgroundColor:'transparent',borderWidth:2,pointRadius:3,pointBackgroundColor:'#b45309',fill:false,tension:.3,order:1}
   ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:10}}},tooltip:{mode:'index',intersect:false,callbacks:{label:ctx=>ctx.dataset.label+': '+ctx.parsed.y.toFixed(1)+'%'}}},scales:{x:{grid:{display:false},ticks:{font:{size:9},maxRotation:55}},y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:9},callback:v=>v+'%'},min:0,max:80}}}});}
   if(ACT5)ACT5.destroy();
   const c5=document.getElementById('actSpeseChart');
@@ -1223,6 +1233,15 @@ function renderActual(){
     const dAbs=v=>v===null?'-':(v>=0?'<span style="color:#10b981">+'+fmt(v,0,'\u20ac ')+'</span>':'<span style="color:#ef4444">'+fmt(v,0,'\u20ac ')+'</span>');
     const dPct=(cur,ref)=>{if(cur===null||ref===null||ref===0)return'';const p=(cur-ref)/Math.abs(ref)*100;return' <span style="font-size:9px;color:'+(p>=0?'#10b981':'#ef4444')+'">'+(p>=0?'+':'')+p.toFixed(1)+'%</span>';};
     const dCell=(cur,ref)=>cur===null&&ref===null?'-':dAbs(cur===null||ref===null?null:cur-ref)+dPct(cur,ref);
+    // Delta invertito: verde se actual < fish (sconto = risparmio)
+    const dCellInv=(cur,ref)=>{
+      if(cur===null&&ref===null)return'-';
+      const diff=cur===null||ref===null?null:cur-ref;
+      const pct=diff!==null&&ref?diff/Math.abs(ref)*100:null;
+      const color=diff===null?'#9ca3af':diff<=0?'#10b981':'#ef4444'; // invertito!
+      const sign=diff!==null&&diff>=0?'+':'';
+      return diff===null?'-':'<span style="color:'+color+'">'+sign+fmt(diff,0,'\u20ac ')+'</span>'+(pct!==null?' <span style="font-size:9px;color:'+color+'">'+sign+pct.toFixed(1)+'%</span>':'');
+    };
 
     // Definizione colonne con tooltip
     const cols=[
@@ -1232,7 +1251,7 @@ function renderActual(){
       {h:'\u0394 Incasso lordo',tip:'Differenza assoluta e % tra Actual e Fish Record. Positivo = actual > fish (hai incassato pi\u00f9 del previsto)'},
       {h:'Spesa pesce (Pesce)',tip:'Dataset 1 — somma Spese (Qa\u00d7Pa) per il periodo, solo pesce'},
       {h:'Spesa pesce (Actual)',tip:'Dataset 2 — somma Uscite Fornitori pesce (Meridional, Pinuccio, Brezza, Franco, Ottavio)'},
-      {h:'\u0394 Spesa fornitori',tip:'Differenza tra spesa actual e fish record. Negativo = hai pagato meno del previsto (sconti, prezzi migliori)'},
+      {h:'\u0394 Spesa fornitori',tip:'Differenza tra spesa actual e fish record. VERDE se actual < fish = i fornitori hanno fatto sconto o prezzi migliori. ROSSO se actual > fish = hai pagato di più'},
       {h:'Netto Fish (Pesce)',tip:'Dataset 1 — Incasso Lordo meno Spese. Formula: Incasso(lordo) \u2212 Spese'},
       {h:'Netto Fish (Actual)',tip:'Dataset 2 — Entrate meno Fornitori pesce (senza benzina e altro). Confronto diretto con Netto Fish'},
       {h:'\u0394 Netto (forn.)',tip:'Differenza tra Netto Actual (solo fornitori) e Netto Fish. Misura la discrepanza tra cassa reale e stima pesce'},
@@ -1246,9 +1265,8 @@ function renderActual(){
 
     const thStyle='padding:7px 9px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;white-space:nowrap;font-size:10px;cursor:default;position:sticky;top:0;background:#fff;z-index:1;';
     const thead='<thead><tr>'+cols.map(c=>{
-      const tip=c.tip?'title="'+c.tip+'"':'';
-      const icon=c.tip?' <span style="font-size:9px;color:#9ca3af;cursor:help;" title="'+c.tip+'">\u24d8</span>':'';
-      return'<th style="'+thStyle+'" '+tip+'>'+c.h+icon+'</th>';
+      const icon=c.tip?'<span class="tip-icon" data-tip="'+c.tip.replace(/"/g,"'")+'"> \u24d8</span>':'';
+      return'<th style="'+thStyle+'" '+(c.tip?'data-tip="'+c.tip.replace(/"/g,"'")+'"':'')+'>'+c.h+icon+'</th>';
     }).join('')+'</tr></thead>';
 
     const tbody='<tbody>'+allKeys.map(k=>{
@@ -1271,7 +1289,7 @@ function renderActual(){
         '<td>'+dCell(il_a,il_f)+'</td>'+
         '<td>'+fmtV(sp_f)+'</td>'+
         '<td>'+fmtV(sp_a)+'</td>'+
-        '<td>'+dCell(sp_a,sp_f)+'</td>'+
+        '<td>'+dCellInv(sp_a,sp_f)+'</td>'+
         '<td>'+fmtV(nn_f)+'</td>'+
         '<td>'+fmtV(nn_a)+'</td>'+
         '<td>'+dCell(nn_a,nn_f)+'</td>'+
