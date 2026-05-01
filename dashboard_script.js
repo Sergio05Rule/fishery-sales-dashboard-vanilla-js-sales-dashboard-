@@ -1119,10 +1119,46 @@ function renderActual(){
   const bOpts=()=>({responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:10}}},tooltip:{mode:'index',intersect:false,callbacks:{label:ctx=>ctx.dataset.label+': \u20ac'+ctx.parsed.y.toLocaleString('it-IT')}}},scales:{x:{grid:{display:false},ticks:{font:{size:9},maxRotation:55}},y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:9},callback:v=>v>=1000?'\u20ac'+(v/1000).toFixed(0)+'k':'\u20ac'+v}}}});
   if(ACT1)ACT1.destroy();
   const c1=document.getElementById('actRevChart');
-  if(c1)ACT1=new Chart(c1,{type:'bar',data:{labels,datasets:[
-    {label:'Lordo Fish Record',data:allKeys.map(k=>Math.round(fishMap[k]?.il||0)),backgroundColor:'rgba(59,130,246,.4)',borderColor:'#3b82f6',borderWidth:1,borderRadius:3},
-    {label:'Lordo Actual',data:allKeys.map(k=>Math.round(actMap[k]?.entrata||0)),backgroundColor:'rgba(16,185,129,.4)',borderColor:'#10b981',borderWidth:1,borderRadius:3}
-  ]},options:bOpts()});
+  if(c1)ACT1=new Chart(c1,{type:'bar',
+    data:{labels,datasets:[
+      {label:'Lordo Fish Record',data:allKeys.map(k=>Math.round(fishMap[k]?.il||0)),backgroundColor:'rgba(59,130,246,.5)',borderColor:'#3b82f6',borderWidth:1,borderRadius:3,order:2},
+      {label:'Lordo Actual',data:allKeys.map(k=>Math.round(actMap[k]?.entrata||0)),backgroundColor:'rgba(16,185,129,.5)',borderColor:'#10b981',borderWidth:1,borderRadius:3,order:2},
+      {
+        label:'\u0394 Lordo (Actual \u2212 Fish)',
+        data:allKeys.map(k=>{
+          const il=fishMap[k]?.il??null,en=actMap[k]?.entrata??null;
+          return il!==null&&en!==null?Math.round(en-il):null;
+        }),
+        type:'line',
+        borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.08)',
+        borderWidth:2,pointRadius:4,pointBackgroundColor:allKeys.map(k=>{
+          const il=fishMap[k]?.il??null,en=actMap[k]?.entrata??null;
+          if(il===null||en===null)return'#9ca3af';
+          return en-il>=0?'#10b981':'#ef4444';
+        }),
+        pointBorderColor:'transparent',fill:true,tension:.3,order:1,
+        segment:{borderColor:ctx=>{
+          const v=ctx.p1.parsed.y;return v>=0?'#10b981':'#ef4444';
+        }}
+      }
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:8}},
+      plugins:{legend:{position:'top',labels:{font:{size:10}}},
+        tooltip:{mode:'index',intersect:false,callbacks:{
+          label:ctx=>{
+            if(ctx.datasetIndex===2){
+              const v=ctx.parsed.y;
+              return'\u0394 Lordo: '+(v>=0?'+':'')+'\u20ac'+v.toLocaleString('it-IT')+' ('+(v>=0?'actual > fish':'actual < fish')+')';
+            }
+            return ctx.dataset.label+': \u20ac'+ctx.parsed.y.toLocaleString('it-IT');
+          }
+        }}},
+      scales:{
+        x:{grid:{display:false},ticks:{font:{size:9},maxRotation:55}},
+        y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:9},callback:v=>v>=1000?'\u20ac'+(v/1000).toFixed(0)+'k':'\u20ac'+v}}
+      }
+    }
+  });
   if(ACT2)ACT2.destroy();
   const c2=document.getElementById('actFornChart');
   if(c2){
@@ -1163,16 +1199,16 @@ function renderActual(){
   if(ACT3)ACT3.destroy();
   const c3=document.getElementById('actNettoChart');
   if(c3)ACT3=new Chart(c3,{type:'bar',data:{labels,datasets:[
-    {label:'Netto Fish',data:allKeys.map(k=>Math.round(fishMap[k]?.inn||0)),backgroundColor:'rgba(59,130,246,.4)',borderColor:'#3b82f6',borderWidth:1,borderRadius:3},
-    {label:'Netto Actual (solo forn.)',data:allKeys.map(k=>Math.round(actMap[k]?.netto_forn||0)),backgroundColor:'rgba(16,185,129,.4)',borderColor:'#10b981',borderWidth:1,borderRadius:3},
-    {label:'Netto Actual (tutto)',data:allKeys.map(k=>Math.round(actMap[k]?.netto_full||0)),type:'line',borderColor:'#6366f1',backgroundColor:'transparent',borderWidth:2,pointRadius:3,fill:false}
+    {label:'Netto Fish (Pesce)',data:allKeys.map(k=>Math.round(fishMap[k]?.inn||0)),backgroundColor:'#3b82f6',borderColor:'#2563eb',borderWidth:1,borderRadius:3},
+    {label:'Netto Actual (solo forn.)',data:allKeys.map(k=>Math.round(actMap[k]?.netto_forn||0)),backgroundColor:'#10b981',borderColor:'#059669',borderWidth:1,borderRadius:3},
+    {label:'Netto Actual (tutto)',data:allKeys.map(k=>Math.round(actMap[k]?.netto_full||0)),backgroundColor:'#b45309',borderColor:'#92400e',borderWidth:1,borderRadius:3}
   ]},options:bOpts()});
   if(ACT4)ACT4.destroy();
   const c4=document.getElementById('actMargChart');
   if(c4){ACT4=new Chart(c4,{type:'bar',data:{labels,datasets:[
-    {label:'Marg% Fish',data:allKeys.map(k=>+(fishMap[k]?.mp_fish||0).toFixed(1)),backgroundColor:'rgba(59,130,246,.4)',borderColor:'#3b82f6',borderWidth:1,borderRadius:3},
-    {label:'Marg% Actual (solo forn.)',data:allKeys.map(k=>+(actMap[k]?.mp_forn||0).toFixed(1)),backgroundColor:'rgba(16,185,129,.4)',borderColor:'#10b981',borderWidth:1,borderRadius:3},
-    {label:'Marg% Actual (tutto)',data:allKeys.map(k=>+(actMap[k]?.mp_full||0).toFixed(1)),type:'line',borderColor:'#6366f1',backgroundColor:'transparent',borderWidth:2,pointRadius:3,fill:false}
+    {label:'Marg% Fish (Pesce)',data:allKeys.map(k=>+(fishMap[k]?.mp_fish||0).toFixed(1)),backgroundColor:'#3b82f6',borderColor:'#2563eb',borderWidth:1,borderRadius:3},
+    {label:'Marg% Actual (solo forn.)',data:allKeys.map(k=>+(actMap[k]?.mp_forn||0).toFixed(1)),backgroundColor:'#10b981',borderColor:'#059669',borderWidth:1,borderRadius:3},
+    {label:'Marg% Actual (tutto)',data:allKeys.map(k=>+(actMap[k]?.mp_full||0).toFixed(1)),backgroundColor:'#b45309',borderColor:'#92400e',borderWidth:1,borderRadius:3}
   ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:10}}},tooltip:{mode:'index',intersect:false,callbacks:{label:ctx=>ctx.dataset.label+': '+ctx.parsed.y.toFixed(1)+'%'}}},scales:{x:{grid:{display:false},ticks:{font:{size:9},maxRotation:55}},y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:9},callback:v=>v+'%'},min:0,max:80}}}});}
   if(ACT5)ACT5.destroy();
   const c5=document.getElementById('actSpeseChart');
