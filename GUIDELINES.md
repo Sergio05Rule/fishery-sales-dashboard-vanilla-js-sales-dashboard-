@@ -1,0 +1,194 @@
+# Dashboard Pescheria — Linee guida di sviluppo
+
+Questo documento raccoglie le regole operative da seguire ogni volta che si modifica il progetto. Va letto prima di iniziare qualsiasi sessione di lavoro.
+
+---
+
+## 1. Regola generale: README sempre aggiornato
+
+**Ogni modifica al codice che cambia un comportamento visibile o documentato deve essere riflessa nel README.md.**
+
+Casi obbligatori:
+
+| Tipo di modifica | Sezione README da aggiornare |
+|-----------------|------------------------------|
+| Aggiunta/modifica mapping nome pesce | `2. Fish name normalization` — entrambe le tabelle (mappa esplicita + passthrough) |
+| Nuovo filtro o modifica filtri | `Filters` nella sezione Features |
+| Nuovo grafico o modifica grafico | Tabella `Charts` nella sezione Features |
+| Modifica formula di calcolo | `4. Calculation formulas` |
+| Modifica logica deduplicazione | `1. Automatic deduplication` |
+| Modifica parsing numerico | `3. Italian number format parsing` |
+| Nuova sezione di analisi | Aggiungere voce in Features |
+| Modifica chiave primaria deduplicazione | `1. Automatic deduplication` + tabella blocchi duplicati |
+
+---
+
+## 2. Fish name normalization — regole
+
+### Come aggiornare la mappa
+
+La mappa si trova in `dashboard_script.js`, funzione `FISH_NORM`, oggetto `const map = {...}`.
+
+**Procedura:**
+1. Modificare la mappa in `dashboard_script.js`
+2. Eseguire la verifica di allineamento:
+   ```bash
+   python3 -c "
+   import re
+   from collections import defaultdict
+   with open('dashboard_script.js') as f: js=f.read()
+   m=re.search(r'const map=\{(.*?)\};',js,re.DOTALL)
+   pairs=re.findall(r\"'([^']+)'\s*:\s*'([^']+)'\",m.group(1))
+   js_map={k:v for k,v in pairs}
+   with open('README.md') as f: readme=f.read()
+   import re as re2
+   table=re2.findall(r'^\|([^|]+)\|([^|]+)\|',readme,re.MULTILINE)
+   rm={}
+   for l,r in table:
+       c=re2.findall(r'\`([^\`]+)\`',r)
+       if not c: continue
+       for v in re2.findall(r'\`([^\`]+)\`',l): rm[v.lower()]=c[0]
+   missing=[k for k in js_map if k not in rm]
+   wrong=[(k,js_map[k],rm[k]) for k in js_map if k in rm and js_map[k]!=rm[k]]
+   print(f'Missing: {len(missing)}, Wrong: {len(wrong)}')
+   if missing: [print(f'  MISSING: {k} -> {v}') for k,v in [(k,js_map[k]) for k in missing]]
+   if wrong: [print(f'  WRONG: {k}: JS={j} README={r}') for k,j,r in wrong]
+   if not missing and not wrong: print('OK - allineati')
+   "
+   ```
+3. Aggiornare la sezione `2. Fish name normalization` nel README
+4. Committare entrambi i file insieme
+
+### Regole di naming canonico
+
+- Usare **Title Case** per tutti i nomi canonici
+- Varianti di taglia (A, G, T7, T8, ecc.) sono **prodotti distinti** — non unirle
+- Singolare vs plurale: usare il **singolare** come canonico (es. `Seppia`, non `Seppie`)
+- Varianti con solo differenza di case → mappare alla versione Title Case corretta
+- Nomi già corretti in Title Case → lasciarli nel fallback (non aggiungere alla mappa esplicita)
+
+### Chiave primaria deduplicazione
+
+```
+Data · Pescheria · Pesce (normalizzato) · Fornitore · Categoria ·
+Qta.Acquistata · PrezzoAcquisto · PrezzoVendita · Rimanenza
+```
+
+La normalizzazione del nome pesce avviene **prima** della deduplicazione. Se si aggiunge una nuova variante alla mappa, la deduplicazione automaticamente la gestirà correttamente.
+
+---
+
+## 3. Cross-filtering — regole
+
+**Tutti i grafici devono filtrarsi tra di loro.** Ogni grafico cliccabile deve:
+
+1. Chiamare `crossFilter = {type: '...', value: '...'}` al click
+2. Chiamare `render()` dopo
+3. Supportare il toggle: se si clicca lo stesso elemento già selezionato, `crossFilter = null`
+
+### Tipi di cross-filter supportati
+
+| `type` | `value` | Filtra per |
+|--------|---------|-----------|
+| `cat` | nome categoria | `r.cat === value` |
+| `fish` | nome pesce normalizzato | `r.psc === value` |
+| `supplier` | nome fornitore | `r.forn === value` |
+| `pe` | nome pescheria | `r.pe === value` |
+| `trend` | chiave numerica periodo | dipende da `PER` (granularità) |
+
+Quando si aggiunge un nuovo grafico cliccabile:
+1. Aggiungere `onClick` al grafico Chart.js
+2. Aggiungere il nuovo tipo in `getFiltered()` in `dashboard_script.js`
+3. Aggiungere il label in `const labels = {...}` nella funzione `render()`
+
+### Grafici pre/post 10/02/2026
+
+La sezione pre/post usa `getData()` (filtri dropdown attivi) ma **non** `getFiltered()` (cross-filter). Questo è intenzionale: la sezione mostra sempre il contesto completo pre/post indipendentemente dal cross-filter attivo. I click sui grafici pre/post attivano il cross-filter `type:'pe'`.
+
+---
+
+## 4. Formule di calcolo
+
+I valori economici vengono letti **direttamente dal CSV** (già calcolati da Excel). Non ricalcolare.
+
+| Metrica | Formula Excel | Campo CSV |
+|---------|--------------|-----------|
+| Spese | `Qa × Pa` | `Spese` |
+| Incasso lordo | `Qv × Pv` | `Incasso (lordo)` |
+| Incasso netto | `Lordo − Spese` | `Incasso (netto)` |
+| Margine % | `Netto / Lordo × 100` | `Margine Lordo (%)` |
+| Qv | `Qa − Scarto − Rimanenza − Gettato` | `Qta. Venduta (Kg)` |
+
+**Margine % aggregato** = media ponderata per volume: `Σ(Netto) / Σ(Lordo) × 100`
+
+**Rimanenze (Fornitore = Rimanenza)**: il costo di acquisto è già stato contabilizzato il giorno dell'acquisto originale. Il file Excel è stato corretto alla fonte per evitare il doppio conteggio delle spese.
+
+---
+
+## 5. Filtri — regole
+
+### Filtri dropdown (cascading multi-select)
+- Anno → Mese → Settimana sono a cascata: la selezione upstream restringe le opzioni downstream
+- Pescheria, Fornitore, Giorno sono indipendenti
+- Tutti i filtri supportano multi-selezione (Ctrl+click) tranne Giorno che è multi-select semplice
+- Quando si aggiunge un nuovo filtro: aggiornarlo in `getData()`, `populateFilters()`, e aggiungere il listener
+
+### Filtro Giorno della settimana
+- Valori: 0=Domenica, 1=Lunedì, ..., 6=Sabato (standard JS `Date.getDay()`)
+- Multi-select: leggere con `[...$giorno.selectedOptions].map(o=>o.value).filter(v=>v!=='tutti')`
+
+---
+
+## 6. Analisi pre/post 10/02/2026
+
+**Data di cambio**: 10 febbraio 2026
+
+**Schema pre-cambio**: Grassano e Grottole operavano insieme Lunedì, Mercoledì e Venerdì.
+
+**Schema post-cambio**:
+- Giovedì → Grottole
+- Venerdì → Grassano
+- Lunedì → Grassano
+- Martedì → Grottole
+- Mercoledì → Grassano
+
+La sezione di analisi è in fondo alla dashboard (`id="prepostSection"`). I grafici usano `getData()` (rispetta i filtri dropdown) ma non il cross-filter. La costante `CUTOFF_PP = new Date(2026, 1, 10)` definisce il punto di taglio.
+
+---
+
+## 7. Struttura file
+
+```
+fishery-sales-dashboard/
+├── pescheria_kpi_dashboard.html   # HTML + CSS inline
+├── dashboard_script.js            # Tutta la logica JS
+├── sample_data.csv                # Dati di esempio
+├── Screenshot.png                 # Screenshot dashboard
+├── README.md                      # Documentazione pubblica (sempre aggiornato)
+├── GUIDELINES.md                  # Questo file (linee guida sviluppo)
+└── .gitignore
+```
+
+---
+
+## 8. Git workflow
+
+- Commit atomici: una feature/fix per commit
+- Formato messaggio: `type(scope): descrizione` (Conventional Commits)
+  - `feat:` nuova funzionalità
+  - `fix:` bug fix
+  - `docs:` solo README/GUIDELINES
+  - `refactor:` refactoring senza cambio comportamento
+- Non pushare mai il CSV reale (`Pescheria*.csv` è in `.gitignore`)
+- Aggiornare README e GUIDELINES nello stesso commit della modifica al codice
+
+---
+
+## 9. Checklist prima di ogni commit
+
+- [ ] `node --check dashboard_script.js` → nessun errore di sintassi
+- [ ] Se modificata la mappa pesce → verifica allineamento JS/README (script sezione 2)
+- [ ] Se aggiunto un grafico → ha `onClick` con cross-filter?
+- [ ] Se aggiunto un tipo di cross-filter → aggiornato `getFiltered()` e `labels` in `render()`?
+- [ ] README aggiornato se necessario
+- [ ] GUIDELINES aggiornato se necessario

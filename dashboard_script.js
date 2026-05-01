@@ -276,6 +276,7 @@ function getFiltered(data){
   if(crossFilter.type==='cat')return data.filter(r=>r.cat===crossFilter.value);
   if(crossFilter.type==='fish')return data.filter(r=>r.psc===crossFilter.value);
   if(crossFilter.type==='supplier')return data.filter(r=>r.forn===crossFilter.value);
+  if(crossFilter.type==='pe')return data.filter(r=>r.pe===crossFilter.value);
   if(crossFilter.type==='trend'){
     const k=crossFilter.value;
     if(PER==='giorno')return data.filter(r=>r.ds===+k);
@@ -958,7 +959,9 @@ function aggPrePost(rows){
 }
 
 function renderPrePost(){
-  const allData=RAW; // usa tutti i dati, non filtrati
+  // Usa i dati filtrati dai dropdown (pescheria, fornitore, anno, mese, settimana, giorno)
+  // ma NON dal cross-filter, così la sezione mostra sempre il contesto completo
+  const allData=getData();
   const pp=aggPrePost(allData);
   const peList=Object.keys(pp).sort();
   const dnList=[1,2,3,4,5,6,0]; // Lun→Dom
@@ -979,6 +982,13 @@ function renderPrePost(){
     }));
     return new Chart(ch,{type:'bar',data:{labels:dnList.map(d=>DN_SHORT[d]),datasets},
       options:{responsive:true,maintainAspectRatio:false,
+        onClick(evt,els){
+          if(!els.length){crossFilter=null;render();return;}
+          const pe=peList[els[0].datasetIndex];
+          if(crossFilter&&crossFilter.type==='pe'&&crossFilter.value===pe)crossFilter=null;
+          else crossFilter={type:'pe',value:pe};
+          render();
+        },
         plugins:{legend:{position:'top',labels:{font:{size:10}}},
           tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': \u20ac'+ctx.parsed.y.toLocaleString('it-IT')}}},
         scales:{x:{grid:{display:false},ticks:{font:{size:10}}},
@@ -999,6 +1009,12 @@ function renderPrePost(){
         {label:'Post 10/02',data:postData,backgroundColor:'rgba(16,185,129,.5)',borderColor:'#10b981',borderWidth:1,borderRadius:3}
       ]},
       options:{responsive:true,maintainAspectRatio:false,
+        onClick(evt,els){
+          if(!els.length){crossFilter=null;render();return;}
+          if(crossFilter&&crossFilter.type==='pe'&&crossFilter.value===pe)crossFilter=null;
+          else crossFilter={type:'pe',value:pe};
+          render();
+        },
         plugins:{legend:{position:'top',labels:{font:{size:10}}},
           tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+ctx.parsed.y.toFixed(1)+'%'}}},
         scales:{x:{grid:{display:false},ticks:{font:{size:10}}},
@@ -1046,6 +1062,14 @@ function renderPrePost(){
   if(PP5)PP5.destroy();
   if(ppSc)PP5=new Chart(ppSc,{type:'scatter',data:{datasets:scDatasets},
     options:{responsive:true,maintainAspectRatio:false,
+      onClick(evt,els){
+        if(!els.length){crossFilter=null;render();return;}
+        const pt=scatterPts.filter(p=>p.pe)[els[0].datasetIndex];
+        const pe=scDatasets[els[0].datasetIndex].label.split(' ')[0];
+        if(crossFilter&&crossFilter.type==='pe'&&crossFilter.value===pe)crossFilter=null;
+        else crossFilter={type:'pe',value:pe};
+        render();
+      },
       plugins:{legend:{position:'top',labels:{font:{size:10},usePointStyle:true}},
         tooltip:{callbacks:{
           title:ctx=>ctx[0].raw.label,
@@ -1123,7 +1147,7 @@ function render(){
   renderPrePost();
   const msg=document.getElementById('loadMsg');
   if(crossFilter){
-    const labels={cat:'Categoria',fish:'Pesce',supplier:'Fornitore',trend:'Periodo'};
+    const labels={cat:'Categoria',fish:'Pesce',supplier:'Fornitore',trend:'Periodo',pe:'Pescheria'};
     const val=crossFilter.type==='trend'?crossFilter.label:crossFilter.value;
     msg.innerHTML='<span style="background:#fef3c7;padding:2px 8px;border-radius:4px;color:#92400e;font-weight:500;">Filtro attivo: '+labels[crossFilter.type]+' = '+val+' <span style="cursor:pointer;margin-left:6px;" id="clearCF">\u2715 rimuovi</span></span>';
     document.getElementById('clearCF').addEventListener('click',()=>{crossFilter=null;render();});
