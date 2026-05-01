@@ -28,7 +28,7 @@ const FISH_NORM=(function(){
     'gamberoni l1':'Gamberoni L1','l1 argentino':'Gamberoni L1',
     'gamberi':'Gamberi',
     // Merluzzo
-    'merluzzi':'Merluzzo 1','merluzzo 1':'Merluzzo 1','merluzzo prima':'Merluzzo 1','merluzzo':'Merluzzo 1',
+    'merluzzi':'Merluzzo Prima','merluzzo 1':'Merluzzo Prima','merluzzo prima':'Merluzzo Prima','merluzzo':'Merluzzo Prima',
     'merluzzo 2':'Merluzzo Seconda','merluzzo seconda':'Merluzzo Seconda',
     // Orata / Orate — A e G sono prodotti distinti
     'orata':'Orata A','orata a':'Orata A',
@@ -50,7 +50,7 @@ const FISH_NORM=(function(){
     // Scampi
     'scampi':'Scampi',
     // Seppia / Seppie
-    'seppia':'Seppia','seppia 10/20':'Seppia 10/20','seppia cioco':'Seppia Cioco',
+    'seppia':'Seppia','seppia 10/20':'Seppia Pulita 10/20','seppia cioco':'Seppia Cioco',
     'seppia pulita':'Seppia Pulita','seppia pulita 10/20':'Seppia Pulita 10/20',
     'seppia sporca':'Seppia Sporca',
     'seppie':'Seppie','seppie 10/20':'Seppia Pulita 10/20','seppie 20/40':'Seppie 20/40',
