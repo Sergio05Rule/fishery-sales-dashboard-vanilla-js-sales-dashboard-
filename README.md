@@ -2,6 +2,8 @@
 
 An interactive, client-side KPI dashboard for multi-location fishery sales analytics. Built with vanilla HTML/JS and Chart.js — no backend, no build step, no framework. Drop in a CSV exported from Excel or Google Sheets and get instant analytics.
 
+![Dashboard screenshot](Screenshot.png)
+
 ---
 
 ## Features
