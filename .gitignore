@@ -1,0 +1,18 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Dati sensibili — il CSV reale NON va in repo pubblico
+# Il file di esempio (sample_data.csv) è incluso nel repo
+Pescheria*.csv
+
+# Log e temp
+*.log
