@@ -204,8 +204,10 @@ const $anno=document.getElementById('fAnno'),$mese=document.getElementById('fMes
     el.setAttribute('size','4');
     el.style.cssText='min-width:'+w+';max-width:180px;border:1px solid #d1d5db;border-radius:6px;background:#fff;color:#1a1a1a;font-size:11px;padding:2px 4px;outline:none;cursor:pointer;';
   });
-  // Giorno settimana: select singolo (7 opzioni fisse, non multi)
-  $giorno.style.cssText='min-width:110px;border:1px solid #d1d5db;border-radius:6px;background:#fff;color:#1a1a1a;font-size:11px;padding:4px 6px;outline:none;cursor:pointer;';
+  // Giorno settimana: multi-select
+  $giorno.setAttribute('multiple','multiple');
+  $giorno.setAttribute('size','4');
+  $giorno.style.cssText='min-width:110px;max-width:140px;border:1px solid #d1d5db;border-radius:6px;background:#fff;color:#1a1a1a;font-size:11px;padding:2px 4px;outline:none;cursor:pointer;';
   const giorni=[['tutti','Tutti'],['1','Lunedì'],['2','Martedì'],['3','Mercoledì'],['4','Giovedì'],['5','Venerdì'],['6','Sabato'],['0','Domenica']];
   $giorno.innerHTML=giorni.map(([v,l])=>'<option value="'+v+'">'+l+'</option>').join('');
   const hint=document.createElement('div');
@@ -265,7 +267,8 @@ function getData(){
   const aVals=getMultiVals($anno);if(aVals)d=d.filter(r=>aVals.includes(String(r.y)));
   const mVals=getMultiVals($mese);if(mVals)d=d.filter(r=>mVals.includes(r.m+'-'+r.y));
   const sVals=getMultiVals($sett);if(sVals)d=d.filter(r=>sVals.includes(r.wk+'-'+r.y));
-  const gVal=$giorno.value;if(gVal!=='tutti')d=d.filter(r=>r.date.getDay()===+gVal);
+  const gVals=[...$giorno.selectedOptions].map(o=>o.value).filter(v=>v!=='tutti');
+  if(gVals.length)d=d.filter(r=>gVals.includes(String(r.date.getDay())));
   return d;
 }
 function getFiltered(data){
@@ -931,6 +934,176 @@ function renderRawTable(data){
 }
 
 // ============================================================
+// RENDER: Pre/Post 10/02/2026 analysis
+// ============================================================
+let PP1=null,PP2=null,PP3=null,PP4=null,PP5=null;
+const CUTOFF_PP=new Date(2026,1,10); // 10 Feb 2026
+const DN_FULL=['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+const DN_SHORT=['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+const PE_COLORS={Grassano:'#3b82f6',Grottole:'#10b981',Brigante:'#f59e0b'};
+
+function aggPrePost(rows){
+  // Returns {pe: {dn: {pre:{cnt,il,inn,qv}, post:{cnt,il,inn,qv}}}}
+  const res={};
+  rows.forEach(r=>{
+    const pe=r.pe;
+    const dn=r.date.getDay(); // 0=Dom,1=Lun,...
+    const isPre=r.date<CUTOFF_PP;
+    if(!res[pe])res[pe]={};
+    if(!res[pe][dn])res[pe][dn]={pre:{cnt:0,il:0,inn:0,qv:0},post:{cnt:0,il:0,inn:0,qv:0}};
+    const slot=isPre?res[pe][dn].pre:res[pe][dn].post;
+    slot.cnt++;slot.il+=r.il;slot.inn+=r.inn;slot.qv+=r.qv;
+  });
+  return res;
+}
+
+function renderPrePost(){
+  const allData=RAW; // usa tutti i dati, non filtrati
+  const pp=aggPrePost(allData);
+  const peList=Object.keys(pp).sort();
+  const dnList=[1,2,3,4,5,6,0]; // Lun→Dom
+
+  // ── Grafico 1 & 2: Revenue media per riga per giorno (pre / post) ──
+  function makeRevChart(canvasId,slot,title){
+    const ch=document.getElementById(canvasId);
+    if(!ch)return null;
+    const datasets=peList.map(pe=>({
+      label:pe,
+      data:dnList.map(dn=>{
+        const v=pp[pe]&&pp[pe][dn]&&pp[pe][dn][slot];
+        return v&&v.cnt>0?+(v.il/v.cnt).toFixed(0):null;
+      }),
+      backgroundColor:PE_COLORS[pe]||'#9ca3af',
+      borderColor:PE_COLORS[pe]||'#9ca3af',
+      borderWidth:1,borderRadius:3,
+    }));
+    return new Chart(ch,{type:'bar',data:{labels:dnList.map(d=>DN_SHORT[d]),datasets},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'top',labels:{font:{size:10}}},
+          tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': \u20ac'+ctx.parsed.y.toLocaleString('it-IT')}}},
+        scales:{x:{grid:{display:false},ticks:{font:{size:10}}},
+          y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:9},callback:v=>'\u20ac'+v}}}}});
+  }
+  if(PP1)PP1.destroy();if(PP2)PP2.destroy();
+  PP1=makeRevChart('ppRevPre','pre');
+  PP2=makeRevChart('ppRevPost','post');
+
+  // ── Grafico 3 & 4: Margine % per giorno pre vs post per pescheria ──
+  function makeMargChart(canvasId,pe){
+    const ch=document.getElementById(canvasId);if(!ch)return null;
+    const preData=dnList.map(dn=>{const v=pp[pe]&&pp[pe][dn]&&pp[pe][dn].pre;return v&&v.il>0?+(v.inn/v.il*100).toFixed(1):null;});
+    const postData=dnList.map(dn=>{const v=pp[pe]&&pp[pe][dn]&&pp[pe][dn].post;return v&&v.il>0?+(v.inn/v.il*100).toFixed(1):null;});
+    return new Chart(ch,{type:'bar',
+      data:{labels:dnList.map(d=>DN_SHORT[d]),datasets:[
+        {label:'Pre 10/02',data:preData,backgroundColor:'rgba(99,102,241,.5)',borderColor:'#6366f1',borderWidth:1,borderRadius:3},
+        {label:'Post 10/02',data:postData,backgroundColor:'rgba(16,185,129,.5)',borderColor:'#10b981',borderWidth:1,borderRadius:3}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'top',labels:{font:{size:10}}},
+          tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+ctx.parsed.y.toFixed(1)+'%'}}},
+        scales:{x:{grid:{display:false},ticks:{font:{size:10}}},
+          y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:9},callback:v=>v+'%'},min:0,max:60}}}});
+  }
+  if(PP3)PP3.destroy();if(PP4)PP4.destroy();
+  PP3=makeMargChart('ppMargGrassano','Grassano');
+  PP4=makeMargChart('ppMargGrottole','Grottole');
+
+  // ── Grafico 5: Scatter volume vs margine pre/post ──
+  const scatterPts=[];
+  peList.forEach(pe=>{
+    dnList.forEach(dn=>{
+      ['pre','post'].forEach(slot=>{
+        const v=pp[pe]&&pp[pe][dn]&&pp[pe][dn][slot];
+        if(!v||v.cnt===0)return;
+        scatterPts.push({
+          x:+(v.qv/v.cnt).toFixed(2),
+          y:v.il>0?+(v.inn/v.il*100).toFixed(1):0,
+          pe,dn,slot,
+          label:pe+' '+DN_SHORT[dn]+' ('+slot+')',
+          il:v.il,inn:v.inn,cnt:v.cnt
+        });
+      });
+    });
+  });
+  // Raggruppa per pe+slot per dataset separati (pre=cerchio, post=triangolo)
+  const scDatasets=[];
+  peList.forEach(pe=>{
+    ['pre','post'].forEach(slot=>{
+      const pts=scatterPts.filter(p=>p.pe===pe&&p.slot===slot);
+      if(!pts.length)return;
+      scDatasets.push({
+        label:pe+' '+(slot==='pre'?'Pre':'Post'),
+        data:pts.map(p=>({x:p.x,y:p.y,label:p.label,il:p.il,inn:p.inn,cnt:p.cnt,dn:p.dn})),
+        backgroundColor:(PE_COLORS[pe]||'#9ca3af')+(slot==='pre'?'99':'dd'),
+        borderColor:PE_COLORS[pe]||'#9ca3af',
+        borderWidth:slot==='pre'?1:2,
+        pointStyle:slot==='pre'?'circle':'triangle',
+        pointRadius:slot==='pre'?7:9,
+      });
+    });
+  });
+  const ppSc=document.getElementById('ppScatter');
+  if(PP5)PP5.destroy();
+  if(ppSc)PP5=new Chart(ppSc,{type:'scatter',data:{datasets:scDatasets},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{font:{size:10},usePointStyle:true}},
+        tooltip:{callbacks:{
+          title:ctx=>ctx[0].raw.label,
+          label:ctx=>[
+            'Kg/riga: '+ctx.raw.x.toFixed(1),
+            'Margine: '+ctx.raw.y.toFixed(1)+'%',
+            'Lordo medio: \u20ac'+(ctx.raw.il/ctx.raw.cnt).toFixed(0),
+            'Netto medio: \u20ac'+(ctx.raw.inn/ctx.raw.cnt).toFixed(0),
+            'Giorni: '+ctx.raw.cnt
+          ]
+        }}},
+      scales:{
+        x:{title:{display:true,text:'Kg venduti per riga',font:{size:10}},grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:9}}},
+        y:{title:{display:true,text:'Margine %',font:{size:10}},grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:9},callback:v=>v+'%'}}
+      }}});
+
+  // ── Tabella riepilogo ──
+  const tbl=document.getElementById('ppTable');
+  if(!tbl)return;
+  const rows2=[];
+  peList.forEach(pe=>{
+    dnList.forEach(dn=>{
+      const pre=pp[pe]&&pp[pe][dn]&&pp[pe][dn].pre;
+      const post=pp[pe]&&pp[pe][dn]&&pp[pe][dn].post;
+      if((!pre||pre.cnt===0)&&(!post||post.cnt===0))return;
+      const mpPre=pre&&pre.il>0?pre.inn/pre.il*100:null;
+      const mpPost=post&&post.il>0?post.inn/post.il*100:null;
+      const dMp=mpPre!==null&&mpPost!==null?mpPost-mpPre:null;
+      const dVol=pre&&post&&pre.cnt>0&&post.cnt>0?(post.qv/post.cnt)-(pre.qv/pre.cnt):null;
+      rows2.push({pe,dn,pre,post,mpPre,mpPost,dMp,dVol});
+    });
+  });
+  const mpDelta=v=>v===null?'-':(v>=0?'<span style="color:#10b981">+'+v.toFixed(1)+'%</span>':'<span style="color:#ef4444">'+v.toFixed(1)+'%</span>');
+  const volDelta=v=>v===null?'-':(v>=0?'<span style="color:#10b981">+'+v.toFixed(1)+'kg</span>':'<span style="color:#ef4444">'+v.toFixed(1)+'kg</span>');
+  tbl.innerHTML='<thead><tr>'+
+    '<th>Pescheria</th><th>Giorno</th>'+
+    '<th>Righe Pre</th><th>Lordo/riga Pre</th><th>Marg% Pre</th><th>Kg/riga Pre</th>'+
+    '<th>Righe Post</th><th>Lordo/riga Post</th><th>Marg% Post</th><th>Kg/riga Post</th>'+
+    '<th>Δ Marg%</th><th>Δ Kg/riga</th>'+
+    '</tr></thead><tbody>'+
+    rows2.map(r=>'<tr>'+
+      '<td style="font-weight:600;">'+r.pe+'</td>'+
+      '<td>'+DN_FULL[r.dn]+'</td>'+
+      '<td>'+(r.pre&&r.pre.cnt||'-')+'</td>'+
+      '<td>'+(r.pre&&r.pre.cnt?'\u20ac'+(r.pre.il/r.pre.cnt).toFixed(0):'-')+'</td>'+
+      '<td style="color:'+mpColor(r.mpPre||0)+';">'+(r.mpPre!==null?r.mpPre.toFixed(1)+'%':'-')+'</td>'+
+      '<td>'+(r.pre&&r.pre.cnt?(r.pre.qv/r.pre.cnt).toFixed(1)+'kg':'-')+'</td>'+
+      '<td>'+(r.post&&r.post.cnt||'-')+'</td>'+
+      '<td>'+(r.post&&r.post.cnt?'\u20ac'+(r.post.il/r.post.cnt).toFixed(0):'-')+'</td>'+
+      '<td style="color:'+mpColor(r.mpPost||0)+';">'+(r.mpPost!==null?r.mpPost.toFixed(1)+'%':'-')+'</td>'+
+      '<td>'+(r.post&&r.post.cnt?(r.post.qv/r.post.cnt).toFixed(1)+'kg':'-')+'</td>'+
+      '<td>'+mpDelta(r.dMp)+'</td>'+
+      '<td>'+volDelta(r.dVol)+'</td>'+
+    '</tr>').join('')+
+    '</tbody>';
+}
+
+// ============================================================
 // RENDER: main
 // ============================================================
 function render(){
@@ -947,6 +1120,7 @@ function render(){
   renderSuppliers(data);
   renderTable(a);
   renderRawTable(data);
+  renderPrePost();
   const msg=document.getElementById('loadMsg');
   if(crossFilter){
     const labels={cat:'Categoria',fish:'Pesce',supplier:'Fornitore',trend:'Periodo'};

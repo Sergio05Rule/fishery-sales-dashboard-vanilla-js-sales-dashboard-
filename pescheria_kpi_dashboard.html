@@ -159,6 +159,47 @@ select:focus{border-color:#3b82f6;box-shadow:0 0 0 2px rgba(59,130,246,.12);}
   <div style="overflow-x:auto;max-height:380px;overflow-y:auto;"><table class="dtbl" id="tbl"></table></div>
 </div>
 
+<!-- ANALISI PRE/POST 10/02/2026 -->
+<div class="card" id="prepostSection">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap;">
+    <div class="stl" style="margin-bottom:0;">Analisi cambio gestione giorni · Pre/Post 10/02/2026</div>
+    <span style="font-size:10px;color:#6b7280;background:#f3f4f6;padding:2px 8px;border-radius:4px;">
+      Pre: Lun+Mer+Ven entrambe · Post: Gio=Grottole, Ven=Grassano, Lun=Grassano, Mar=Grottole, Mer=Grassano
+    </span>
+  </div>
+  <!-- Riga 1: Revenue per giorno per pescheria (pre vs post) -->
+  <div class="charts3" style="margin-bottom:8px;">
+    <div style="background:#f9fafb;border-radius:8px;padding:12px;">
+      <div class="stl">Incasso lordo medio per riga · per giorno (Pre)</div>
+      <div style="position:relative;height:200px;"><canvas id="ppRevPre"></canvas></div>
+    </div>
+    <div style="background:#f9fafb;border-radius:8px;padding:12px;">
+      <div class="stl">Incasso lordo medio per riga · per giorno (Post)</div>
+      <div style="position:relative;height:200px;"><canvas id="ppRevPost"></canvas></div>
+    </div>
+  </div>
+  <!-- Riga 2: Margine % per giorno per pescheria (pre vs post) -->
+  <div class="charts3" style="margin-bottom:8px;">
+    <div style="background:#f9fafb;border-radius:8px;padding:12px;">
+      <div class="stl">Margine % per giorno · Pre vs Post (Grassano)</div>
+      <div style="position:relative;height:200px;"><canvas id="ppMargGrassano"></canvas></div>
+    </div>
+    <div style="background:#f9fafb;border-radius:8px;padding:12px;">
+      <div class="stl">Margine % per giorno · Pre vs Post (Grottole)</div>
+      <div style="position:relative;height:200px;"><canvas id="ppMargGrottole"></canvas></div>
+    </div>
+  </div>
+  <!-- Riga 3: Scatter volume vs margine pre/post -->
+  <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:8px;">
+    <div class="stl">Volume (kg/riga) vs Margine % · Pre (●) vs Post (▲) · per pescheria+giorno</div>
+    <div style="position:relative;height:260px;"><canvas id="ppScatter"></canvas></div>
+  </div>
+  <!-- Riga 4: Tabella riepilogo -->
+  <div style="overflow-x:auto;">
+    <table class="dtbl" id="ppTable"></table>
+  </div>
+</div>
+
 <div class="card">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
     <div class="stl" style="margin-bottom:0;">Dati grezzi (righe visibili)</div>
