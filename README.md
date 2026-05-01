@@ -183,25 +183,52 @@ Using all fields as the key would keep rows with the same transaction but a triv
 
 ### 2. Fish name normalization
 
-The dataset contained **40+ spelling variants** of the same fish due to case differences, abbreviations, typos and alternative names. The `FISH_NORM()` function maps all variants to a canonical name:
+The dataset contained **40+ spelling variants** of the same fish due to case differences, abbreviations, typos and alternative names. The `FISH_NORM()` function in `dashboard_script.js` maps all variants to a canonical name before any aggregation or deduplication occurs.
 
-| Variants in CSV | Canonical name |
-|----------------|----------------|
-| `Pancasio`, `Pangasio` | `Pangasio` |
-| `Raia`, `Raya`, `Razza` | `Razza` |
-| `Polpo t8`, `Polpi t8`, `Polipi t8` | `Polpo T8` |
-| `Orate g`, `Orata g` | `Orata G` |
-| `Seppie pulite`, `Seppie Pulita`, `Seppie pulite 10/20` | `Seppia Pulita` / `Seppia Pulita 10/20` |
-| `Sogliola(TIgri)`, `Sogliola tigri`, `Sogliola (tigri)` | `Sogliola Tigri` |
+| Raw variants in CSV | Canonical name |
+|--------------------|----------------|
 | `Coda di rospo`, `Code di rospo` | `Coda di Rospo` |
+| `Cozza grecia`, `Cozze grecia` | `Cozze Grecia` |
+| `Cozza pelosa` | `Cozze Pelosa` |
+| `Cozza sfusa` | `Cozze Sfusa` |
+| `Cozza treccia`, `Cozze treccia` | `Cozze Treccia` |
+| `Cozze spagna` | `Cozze Spagna` |
+| `Gamberi 20/30` | `Gamberi 20/30` |
+| `Gamberi salipci` | `Gamberi Salipci` |
 | `Gamberoni l1`, `L1 Argentino` | `Gamberoni L1` |
 | `Merluzzi`, `Merluzzo 1`, `Merluzzo 2`, `Merluzzo prima` | `Merluzzo` |
+| `Merluzzo seconda` | `Merluzzo Seconda` |
+| `Orata`, `Orata a` | `Orata` |
+| `Orata g`, `Orate g` | `Orata G` |
+| `Orate`, `Orate a` | `Orate` |
+| `Pancasio`, `Pangasio` | `Pangasio` |
+| `Pesce spada`, `Pesce Spada` | `Pesce Spada` |
 | `Pescatrici`, `Pescatrice` | `Pescatrice` |
-| `Spigole g`, `Spigola g` | `Spigola G` |
+| `Polpo`, `Polpi` | `Polpo` |
+| `Polpo  T7` | `Polpo T7` |
+| `Polpo T4` | `Polpo T4` |
+| `Polpo t8`, `Polpi t8`, `Polipi t8` | `Polpo T8` |
+| `Raia`, `Raya`, `Razza` | `Razza` |
+| `Seppia 10/20` | `Seppia 10/20` |
+| `Seppia cioco`, `Seppie cioco` | `Seppia Cioco` |
+| `Seppia pulita`, `Seppie pulita`, `Seppie pulite` | `Seppia Pulita` |
+| `Seppia pulita 10/20`, `Seppie pulite 10/20` | `Seppia Pulita 10/20` |
+| `Seppie pulita gold` | `Seppia Pulita Gold` |
+| `Seppia sporca` | `Seppia Sporca` |
+| `Seppie 10/20` | `Seppie 10/20` |
+| `Seppie 20/40` | `Seppie 20/40` |
+| `Sogliola (lingua)` | `Sogliola Lingua` |
+| `Sogliola (tigri)`, `Sogliola tigri`, `Sogliola(TIgri)`, `Sogliole tigri` | `Sogliola Tigri` |
+| `Spigola`, `Spigola a` | `Spigola` |
+| `Spigola g`, `Spigole g`, `Spigole 2g`, `Spigole 3g` | `Spigola G` |
+| `Spigole` | `Spigole` |
 | `Baccala Congelato` | `Baccalà Congelato` |
-| *(40+ variants total)* | |
+| `Baccalà salato` | `Baccalà Salato` |
+| `Vongole v.` | `Vongole V.` |
+| `Vongole lupini` | `Vongole Lupini` |
+| `Lupini mega` | `Lupini Mega` |
 
-Normalization runs **before** deduplication, so rows with the same fish spelled differently are correctly identified as duplicates.
+Any name not found in the map is title-cased automatically as a fallback (e.g. `pesce spada` → `Pesce Spada`).
 
 ---
 
