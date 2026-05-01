@@ -196,9 +196,8 @@ The dataset contained **40+ spelling variants** of the same fish due to case dif
 | `Gamberi 20/30` | `Gamberi 20/30` |
 | `Gamberi salipci` | `Gamberi Salipci` |
 | `Gamberoni l1`, `L1 Argentino` | `Gamberoni L1` |
-| `Merluzzi`, `Merluzzo 1`, `Merluzzo prima` | `Merluzzo` |
-| `Merluzzo 2` | `Merluzzo 2` |
-| `Merluzzo seconda` | `Merluzzo Seconda` |
+| `Merluzzi`, `Merluzzo 1`, `Merluzzo prima`, `Merluzzo` | `Merluzzo 1` |
+| `Merluzzo 2`, `Merluzzo seconda` | `Merluzzo Seconda` |
 | `Orata`, `Orata a`, `Orate`, `Orate a` | `Orata A` |
 | `Orata g`, `Orate g` | `Orata G` |
 | `Pancasio`, `Pangasio` | `Pangasio` |
@@ -218,8 +217,8 @@ The dataset contained **40+ spelling variants** of the same fish due to case dif
 | `Seppie 20/40` | `Seppie 20/40` |
 | `Sogliola (lingua)` | `Sogliola Lingua` |
 | `Sogliola (tigri)`, `Sogliola tigri`, `Sogliola(TIgri)`, `Sogliole tigri` | `Sogliola Tigri` |
-| `Spigola`, `Spigola a` | `Spigola` |
-| `Spigola g`, `Spigole`, `Spigole g` | `Spigola G` |
+| `Spigola`, `Spigola a`, `Spigole` | `Spigola A` |
+| `Spigola g`, `Spigole g` | `Spigola G` |
 | `Spigole 2g` | `Spigole 2G` |
 | `Spigole 3g` | `Spigole 3G` |
 | `Baccala Congelato` | `Baccalà Congelato` |

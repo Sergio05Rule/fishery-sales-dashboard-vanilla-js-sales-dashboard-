@@ -62,9 +62,9 @@ const FISH_NORM=(function(){
     'sogliola (tigri)':'Sogliola Tigri','sogliola tigri':'Sogliola Tigri',
     'sogliola(tigri)':'Sogliola Tigri','sogliole tigri':'Sogliola Tigri',
     // Spigola / Spigole
-    'spigola':'Spigola','spigola a':'Spigola','spigola g':'Spigola G',
-    'spigole':'Spigola G','spigole 2g':'Spigole 2G','spigole 3g':'Spigole 3G',
-    'spigole g':'Spigola G',
+    'spigola':'Spigola A','spigola a':'Spigola A','spigole':'Spigola A',
+    'spigola g':'Spigola G','spigole g':'Spigola G',
+    'spigole 2g':'Spigole 2G','spigole 3g':'Spigole 3G',
     // Baccalà
     'baccala congelato':'Baccalà Congelato','baccalà salato':'Baccalà Salato',
     // Vongole
