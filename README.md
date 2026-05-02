@@ -256,9 +256,8 @@ Schedule change:
 | `Baccala Congelato` | `Baccalà Congelato` |
 | `Baccalà salato` | `Baccalà Salato` |
 | `Vongole`, `Vongole v.`, `Vongole veraci` | `Vongole Veraci` |
-| `Vongole lupini` | `Lupini` |
+| `Lupini`, `Vongole lupini` | `Lupini` |
 | `Lupini mega` | `Lupini Mega` |
-| `Lupini` | `Lupini` |
 
 ### Passthrough names (title-case fallback, no explicit mapping needed)
 
