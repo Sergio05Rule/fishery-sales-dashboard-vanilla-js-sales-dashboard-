@@ -252,7 +252,7 @@ Schedule change:
 | `Baccalà salato` | `Baccalà Salato` |
 | `Vongole` | `Vongole` |
 | `Vongole lupini` | `Vongole Lupini` |
-| `Vongole v.` | `Vongole V.` |
+| `Vongole v.` | `Vongole Veraci` |
 | `Lupini mega` | `Lupini Mega` |
 | `Lupini` | `Lupini` |
 
