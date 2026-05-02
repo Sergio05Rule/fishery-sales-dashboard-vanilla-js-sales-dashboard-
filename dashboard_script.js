@@ -2032,22 +2032,20 @@ function buildHeatmap(wrapId,data,metricFn,metricLabel){
     html+='<td style="border-left:2px solid #e5e7eb;font-weight:700;color:#1a1a1a;white-space:nowrap;padding:4px 8px;">'+(rowTotal>0?fmtV(rowTotal):'-')+'</td>';
     html+='</tr>';
   });
-  // Riga totale colonne — usa totali ASSOLUTI (non somma di medie)
-  // Questo corrisponde al totale dell'Overview
-  const absTotByFish={};
-  data.forEach(r=>{
-    if(!absTotByFish[r.psc])absTotByFish[r.psc]=0;
-    absTotByFish[r.psc]+=metricFn(r);
-  });
-  const absGrandTotal=data.reduce((s,r)=>s+metricFn(r),0);
-  html+='<tr style="border-top:2px solid #e5e7eb;background:#f9fafb;"><td style="font-weight:700;padding:4px 8px;font-size:10px;" title="Totale assoluto del periodo (corrisponde all\'Overview)">Totale\u00b9</td>';
+  // Riga totale colonne — somma delle medie giornaliere per pesce
+  // NOTA: questo è diverso dal totale assoluto dell'Overview (che somma tutte le righe)
+  // Qui ogni cella = media per giornata distinta, quindi il totale = somma di medie
+  html+='<tr style="border-top:2px solid #e5e7eb;background:#f9fafb;"><td style="font-weight:700;padding:4px 8px;font-size:10px;" title="Somma delle medie giornaliere — non corrisponde al totale assoluto dell\'Overview">Media tot.\u00b9</td>';
+  let grandTotal=0;
   allFish.forEach(f=>{
-    const v=absTotByFish[f]||0;
-    html+='<td style="font-weight:700;color:#1a1a1a;white-space:nowrap;">'+(v>0?fmtV(v):'-')+'</td>';
+    let colTotal=0;
+    dnIdx.forEach(dn=>{const k=dn+'|'+f;const cnt=dayCnt[dn]?.size||1;colTotal+=mat[k]?mat[k]/cnt:0;});
+    grandTotal+=colTotal;
+    html+='<td style="font-weight:700;color:#1a1a1a;white-space:nowrap;">'+(colTotal>0?fmtV(colTotal):'-')+'</td>';
   });
-  html+='<td style="border-left:2px solid #e5e7eb;font-weight:700;color:#1a1a1a;padding:4px 8px;">'+(absGrandTotal>0?fmtV(absGrandTotal):'-')+'</td>';
+  html+='<td style="border-left:2px solid #e5e7eb;font-weight:700;color:#1a1a1a;padding:4px 8px;">'+(grandTotal>0?fmtV(grandTotal):'-')+'</td>';
   html+='</tr></tbody>';
-  html+='<tfoot><tr><td colspan="'+(allFish.length+2)+'" style="font-size:9px;color:#9ca3af;padding:4px 8px;">¹ Totale assoluto del periodo — corrisponde ai KPI dell\'Overview. Le celle mostrano la media per giornata distinta.</td></tr></tfoot>';
+  html+='<tfoot><tr><td colspan="'+(allFish.length+2)+'" style="font-size:9px;color:#9ca3af;padding:4px 8px;">¹ Ogni cella = media €/giornata distinta per quel giorno della settimana. Il totale è somma di medie, non il totale assoluto del periodo (visibile nell\'Overview).</td></tr></tfoot>';
   html+='</table>';
   wrap.innerHTML=html;
 }
