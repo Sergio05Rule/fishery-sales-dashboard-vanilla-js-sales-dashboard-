@@ -2230,25 +2230,49 @@ function loadFromGoogleSheets(){
 }
 
 (function autoLoad(){
-  const fname='Pescheria - Abasci\u00e0 Excel - Lavoro - Dataset Pesce.csv';
-  document.getElementById('loadMsg').textContent='Caricamento CSV in corso...';
-  fetch(encodeURIComponent(fname))
-    .then(r=>{if(!r.ok)throw new Error(r.status);return r.text();})
+  const SHEET_ID='1kh9G_d6SgLRGY6B3DNk8mk8cjXBlgfPATMtas45sbOs';
+  const DS1_URL='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/export?format=csv&gid=1404737086';
+  const DS2_URL='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/export?format=csv&gid=589730055';
+
+  // Carica DS1 (Dataset Pesce)
+  document.getElementById('loadMsg').textContent='Caricamento dati da Google Sheets...';
+  fetch(DS1_URL)
+    .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.text();})
     .then(loadData)
     .catch(()=>{
-      document.getElementById('loadMsg').innerHTML='Caricamento automatico non disponibile \u2014 usa <b>\uD83D\uDCC2 Carica CSV</b> per selezionare il file.';
+      // Fallback al file locale se Google Sheets non raggiungibile
+      const fname='Pescheria - Abasci\u00e0 Excel - Lavoro - Dataset Pesce.csv';
+      document.getElementById('loadMsg').textContent='Google Sheets non raggiungibile, provo file locale...';
+      fetch(encodeURIComponent(fname))
+        .then(r=>{if(!r.ok)throw new Error(r.status);return r.text();})
+        .then(loadData)
+        .catch(()=>{
+          document.getElementById('loadMsg').innerHTML='Impossibile caricare i dati \u2014 usa <b>\uD83D\uDCC2 Carica CSV</b> per selezionare il file manualmente.';
+        });
     });
-  // Autoload Dataset 2
-  const fname2='Pescheria - Abasci\u00e0 Excel - Lavoro - Entrate_Uscite.csv';
-  fetch(encodeURIComponent(fname2))
-    .then(r=>{if(!r.ok)throw new Error(r.status);return r.text();})
+
+  // Carica DS2 (Entrate/Uscite)
+  fetch(DS2_URL)
+    .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.text();})
     .then(text=>{
       RAW2=buildFromCSV2(text);
       if(!RAW2.length)return;
-      document.getElementById('loadMsg2').innerHTML='<span style="color:#166534;background:#f0fdf4;padding:2px 8px;border-radius:4px;">Dataset Actual caricato: '+RAW2.length+' righe</span>';
-      const sec=document.getElementById('actualSection');
-      if(sec)sec.style.display='';
+      document.getElementById('loadMsg2').innerHTML='<span style="color:#166534;background:#f0fdf4;padding:2px 8px;border-radius:4px;">Actual caricato: '+RAW2.length+' righe</span>';
+      const sec=document.getElementById('actualSection');if(sec)sec.style.display='';
       populateActualFilters();
     })
-    .catch(()=>{}); // silenzioso se non trovato, si usa il bottone manuale
+    .catch(()=>{
+      // Fallback al file locale
+      const fname2='Pescheria - Abasci\u00e0 Excel - Lavoro - Entrate_Uscite.csv';
+      fetch(encodeURIComponent(fname2))
+        .then(r=>{if(!r.ok)throw new Error(r.status);return r.text();})
+        .then(text=>{
+          RAW2=buildFromCSV2(text);
+          if(!RAW2.length)return;
+          document.getElementById('loadMsg2').innerHTML='<span style="color:#166534;background:#f0fdf4;padding:2px 8px;border-radius:4px;">Actual caricato (locale): '+RAW2.length+' righe</span>';
+          const sec=document.getElementById('actualSection');if(sec)sec.style.display='';
+          populateActualFilters();
+        })
+        .catch(()=>{}); // silenzioso
+    });
 })();
