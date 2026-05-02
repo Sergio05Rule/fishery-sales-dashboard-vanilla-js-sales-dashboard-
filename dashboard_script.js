@@ -130,7 +130,8 @@ function buildFromCSV(text){
         iQa=idx('qta. acquistata'),iPa=idx('prezzo acquisto'),iPv=idx('prezzo vendita'),
         iRim=idx('rimanenza'),iGet=idx('gettato'),iScT=idx('scarto totale'),
         iSp=idx('spese'),iIl=idx('incasso (lordo)'),iIn=idx('incasso (netto)'),
-        iMpct=idx('margine lordo (%)'),iQv=idx('qta. venduta'),iRoi=idx('roi pesce');
+        iMpct=idx('margine lordo (%)'),iQv=idx('qta. venduta'),iRoi=idx('roi pesce'),
+        iMeteo=idx('meteo');
   const out=[];
 
   // ── DEDUPLICAZIONE ──────────────────────────────────────────────────────────
@@ -186,7 +187,8 @@ function buildFromCSV(text){
     const snv=+(rim*pa).toFixed(2);
     const m=d.getMonth()+1,y=d.getFullYear(),q=Math.ceil(m/3),wk=isoWeek(d);
     const ds=y*10000+m*100+d.getDate();
-    out.push({date:d,ds,pe,psc,pscRaw,forn,cat,qa,pa,pv,rim,gt,sc,sp,il,inn,mp,roi,qv,snv,m,y,q,wk});
+    const meteo=(row[iMeteo]||'').trim()||'N/D';
+    out.push({date:d,ds,pe,psc,pscRaw,forn,cat,qa,pa,pv,rim,gt,sc,sp,il,inn,mp,roi,qv,snv,m,y,q,wk,meteo});
   }
   return out.sort((a,b)=>a.date-b.date);
 }
@@ -1762,6 +1764,275 @@ function renderPrePost(){
 }
 
 // ============================================================
+// NUOVI GRAFICI ANALITICI
+// ============================================================
+let PARETO=null,WATERFALL=null,METEO=null;
+
+// ── Pareto ───────────────────────────────────────────────────
+function renderPareto(a){
+  const wrap=document.getElementById('paretoWrap');
+  if(!wrap)return;
+  if(!a||!a.fish.length){if(PARETO)PARETO.destroy();return;}
+  const fish=[...a.fish].sort((a,b)=>b.il-a.il);
+  const totIl=fish.reduce((s,f)=>s+f.il,0);
+  let cum=0;
+  const cumPct=fish.map(f=>{cum+=f.il;return totIl>0?+(cum/totIl*100).toFixed(1):0;});
+  const barW=Math.max(600,fish.length*32);
+  wrap.style.width=barW+'px';wrap.style.height='300px';
+  const canvas=document.getElementById('paretoChart');
+  canvas.style.width=barW+'px';canvas.style.height='300px';
+  if(PARETO)PARETO.destroy();
+  PARETO=new Chart(canvas,{type:'bar',
+    data:{labels:fish.map(f=>f.n),datasets:[
+      {label:'Incasso lordo',data:fish.map(f=>Math.round(f.il)),backgroundColor:fish.map((_,i)=>cumPct[i]<=80?'rgba(59,130,246,.7)':'rgba(156,163,175,.4)'),borderColor:fish.map((_,i)=>cumPct[i]<=80?'#3b82f6':'#9ca3af'),borderWidth:1,borderRadius:3,order:2,yAxisID:'y'},
+      {label:'% cumulata fatturato',data:cumPct,type:'line',borderColor:'#f59e0b',backgroundColor:'transparent',borderWidth:2,pointRadius:2,fill:false,tension:.2,order:1,yAxisID:'y2'},
+      {label:'Soglia 80%',data:fish.map(()=>80),type:'line',borderColor:'#ef4444',backgroundColor:'transparent',borderWidth:1,borderDash:[4,3],pointRadius:0,fill:false,order:0,yAxisID:'y2'}
+    ]},
+    options:{responsive:false,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{font:{size:10}}},tooltip:{mode:'index',intersect:false,callbacks:{
+        label:ctx=>{
+          if(ctx.datasetIndex===0)return'Lordo: \u20ac'+ctx.parsed.y.toLocaleString('it-IT');
+          if(ctx.datasetIndex===1)return'Cumulato: '+ctx.parsed.y.toFixed(1)+'%';
+          return'';
+        }
+      }}},
+      scales:{
+        x:{grid:{display:false},ticks:{font:{size:9},maxRotation:55}},
+        y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:9},callback:v=>v>=1000?'\u20ac'+(v/1000).toFixed(0)+'k':'\u20ac'+v},position:'left'},
+        y2:{grid:{display:false},ticks:{font:{size:9},callback:v=>v+'%'},position:'right',min:0,max:100}
+      }
+    }
+  });
+}
+
+// ── Waterfall ────────────────────────────────────────────────
+function renderWaterfall(a){
+  const canvas=document.getElementById('waterfallChart');
+  if(!canvas||!a)return;
+  if(WATERFALL)WATERFALL.destroy();
+  // Voci: Incasso lordo → -Scarto → -Rimanenza → -Spese acquisto → = Margine netto
+  const il=a.il,sp=a.sp,sc=a.sc,rim=a.rim,inn=a.inn;
+  const snv=a.snv||0; // valore rimanenza immobilizzato
+  // Waterfall: barre floating [start, end]
+  const steps=[
+    {l:'Incasso lordo',v:il,start:0,end:il,color:'rgba(59,130,246,.7)',border:'#3b82f6'},
+    {l:'- Spese acquisto',v:-sp,start:il-sp,end:il,color:'rgba(239,68,68,.6)',border:'#ef4444'},
+    {l:'- Scarto (stima)',v:-(sc*(sp/Math.max(a.qv+sc,1))),start:0,end:0,color:'rgba(245,158,11,.6)',border:'#f59e0b'},
+    {l:'= Margine netto',v:inn,start:0,end:inn,color:inn>=0?'rgba(16,185,129,.7)':'rgba(239,68,68,.7)',border:inn>=0?'#10b981':'#ef4444'},
+  ];
+  // Ricalcola start per scarto
+  steps[2].start=inn;steps[2].end=inn+(steps[2].v);
+  const labels=steps.map(s=>s.l);
+  // Floating bar: dataset con [min,max]
+  const floatData=steps.map(s=>[Math.min(s.start,s.end),Math.max(s.start,s.end)]);
+  WATERFALL=new Chart(canvas,{type:'bar',
+    data:{labels,datasets:[{
+      label:'Valore',data:floatData,
+      backgroundColor:steps.map(s=>s.color),
+      borderColor:steps.map(s=>s.border),
+      borderWidth:1,borderRadius:4,
+      // Aggiungi label valore
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{
+        label:ctx=>{const s=steps[ctx.dataIndex];return s.l+': \u20ac'+Math.round(s.v).toLocaleString('it-IT');}
+      }},
+      // Plugin per label sopra/sotto le barre
+      afterDatasetsDraw:(chart)=>{
+        const ctx2=chart.ctx;const meta=chart.getDatasetMeta(0);
+        ctx2.save();ctx2.font='bold 10px sans-serif';ctx2.textAlign='center';
+        meta.data.forEach((bar,i)=>{
+          const s=steps[i];const v=Math.round(s.v);
+          const sign=v>=0?'+':'';
+          ctx2.fillStyle=v>=0?'#10b981':'#ef4444';
+          ctx2.textBaseline=v>=0?'bottom':'top';
+          const y=v>=0?Math.min(bar.y,bar.base)-3:Math.max(bar.y,bar.base)+3;
+          ctx2.fillText(sign+'\u20ac'+Math.abs(v).toLocaleString('it-IT'),bar.x,y);
+        });
+        ctx2.restore();
+      }},
+      scales:{
+        x:{grid:{display:false},ticks:{font:{size:10}}},
+        y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:9},callback:v=>v>=1000?'\u20ac'+(v/1000).toFixed(0)+'k':'\u20ac'+v}}
+      }
+    }
+  });
+}
+
+// ── Heatmap giorno × pesce ───────────────────────────────────
+function renderHeatmap(data){
+  const wrap=document.getElementById('heatmapWrap');
+  if(!wrap||!data.length)return;
+  const DN=['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+  const dnIdx=[1,2,3,4,5,6,0];
+  // Top 15 pesci per incasso
+  const byFish={};
+  data.forEach(r=>{if(!byFish[r.psc])byFish[r.psc]=0;byFish[r.psc]+=r.il;});
+  const topFish=Object.entries(byFish).sort((a,b)=>b[1]-a[1]).slice(0,15).map(e=>e[0]);
+  // Matrice: fish × giorno → incasso medio per giornata
+  const mat={};
+  const dayCnt={};
+  data.forEach(r=>{
+    if(!topFish.includes(r.psc))return;
+    const dn=r.date.getDay();
+    const k=r.psc+'|'+dn;
+    if(!mat[k])mat[k]=0;mat[k]+=r.il;
+    const dk=dn;if(!dayCnt[dk])dayCnt[dk]=new Set();
+    dayCnt[dk].add(r.date.toISOString().slice(0,10));
+  });
+  // Normalizza per numero di giornate distinte
+  const vals=[];
+  topFish.forEach(f=>dnIdx.forEach(dn=>{
+    const k=f+'|'+dn;const cnt=dayCnt[dn]?.size||1;
+    vals.push(mat[k]?mat[k]/cnt:0);
+  }));
+  const maxV=Math.max(...vals,1);
+  // Colore: 0=rosso, max=verde
+  function heatColor(v){
+    const t=v/maxV;
+    const r=Math.round(239+(16-239)*t),g=Math.round(68+(185-68)*t),b=Math.round(68+(129-68)*t);
+    return`rgb(${r},${g},${b})`;
+  }
+  function textColor(v){return v/maxV>0.5?'#fff':'#1a1a1a';}
+  let html='<table class="hm-table"><thead><tr><th>Pesce</th>'+DN.map(d=>'<th>'+d+'</th>').join('')+'</tr></thead><tbody>';
+  topFish.forEach(f=>{
+    html+='<tr><td style="font-weight:600;white-space:nowrap;padding:3px 8px;font-size:10px;">'+f+'</td>';
+    dnIdx.forEach(dn=>{
+      const k=f+'|'+dn;const cnt=dayCnt[dn]?.size||1;
+      const v=mat[k]?mat[k]/cnt:0;
+      const bg=v>0?heatColor(v):'#f3f4f6';
+      const tc=v>0?textColor(v):'#9ca3af';
+      html+='<td style="background:'+bg+';color:'+tc+';">'+(v>0?'\u20ac'+(v>=1000?(v/1000).toFixed(1)+'k':Math.round(v)):'-')+'</td>';
+    });
+    html+='</tr>';
+  });
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
+}
+
+// ── Impatto meteo ────────────────────────────────────────────
+function renderMeteo(data){
+  const canvas=document.getElementById('meteoChart');
+  if(!canvas||!data.length)return;
+  if(METEO)METEO.destroy();
+  // Raggruppa per meteo → incasso medio per giornata
+  const byMeteo={};const dayCnt={};
+  data.forEach(r=>{
+    const m=(r.meteo||'N/D').trim()||'N/D';
+    if(!byMeteo[m])byMeteo[m]={il:0,inn:0};
+    byMeteo[m].il+=r.il;byMeteo[m].inn+=r.inn;
+    const dk=m+'|'+r.date.toISOString().slice(0,10);
+    if(!dayCnt[dk])dayCnt[dk]=true;
+  });
+  // Conta giorni distinti per meteo
+  const meteoDay={};
+  data.forEach(r=>{
+    const m=(r.meteo||'N/D').trim()||'N/D';
+    if(!meteoDay[m])meteoDay[m]=new Set();
+    meteoDay[m].add(r.date.toISOString().slice(0,10));
+  });
+  const ent=Object.entries(byMeteo).map(([m,v])=>({m,il:v.il/(meteoDay[m]?.size||1),inn:v.inn/(meteoDay[m]?.size||1),days:meteoDay[m]?.size||0})).sort((a,b)=>b.il-a.il);
+  const meteoColors={'Sole':'#f59e0b','Nuvolo':'#6b7280','Pioggia':'#3b82f6','Vento':'#10b981','N/D':'#9ca3af'};
+  METEO=new Chart(canvas,{type:'bar',
+    data:{labels:ent.map(e=>e.m+' ('+e.days+'gg)'),datasets:[
+      {label:'Incasso lordo medio/giornata',data:ent.map(e=>Math.round(e.il)),backgroundColor:ent.map(e=>(meteoColors[e.m]||'#9ca3af')+'99'),borderColor:ent.map(e=>meteoColors[e.m]||'#9ca3af'),borderWidth:1,borderRadius:4},
+      {label:'Netto medio/giornata',data:ent.map(e=>Math.round(e.inn)),type:'line',borderColor:'#10b981',backgroundColor:'transparent',borderWidth:2,pointRadius:4,pointBackgroundColor:'#10b981',fill:false}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{font:{size:10}}},tooltip:{mode:'index',intersect:false,callbacks:{label:ctx=>ctx.dataset.label+': \u20ac'+ctx.parsed.y.toLocaleString('it-IT')}}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:9},callback:v=>v>=1000?'\u20ac'+(v/1000).toFixed(0)+'k':'\u20ac'+v}}}
+    }
+  });
+}
+
+// ── Simulatore pricing ───────────────────────────────────────
+function initSimulator(a){
+  const selPesce=document.getElementById('simPesce');
+  if(!selPesce||!a||!a.fish.length)return;
+  // Popola select pesci
+  const prev=selPesce.value;
+  selPesce.innerHTML=a.fish.map(f=>'<option value="'+f.n+'">'+f.n+'</option>').join('');
+  if(a.fish.find(f=>f.n===prev))selPesce.value=prev;
+  selPesce.onchange=()=>loadSimValues(a);
+  loadSimValues(a);
+}
+function loadSimValues(a){
+  const selPesce=document.getElementById('simPesce');
+  if(!selPesce||!a)return;
+  const fish=a.fish.find(f=>f.n===selPesce.value)||a.fish[0];
+  if(!fish)return;
+  const pv=fish.pv_w||0,pa=fish.pa_w||0,qa=fish.qv||0;
+  const scPct=fish.qv>0?fish.sc/(fish.qv+fish.sc)*100:0;
+  const rimPct=fish.qv>0?fish.rim/(fish.qv+fish.rim)*100:0;
+  renderSimSliders({pv,pa,qa,scPct,rimPct});
+}
+function renderSimSliders(vals){
+  const wrap=document.getElementById('simSliders');
+  if(!wrap)return;
+  const sliders=[
+    {id:'simPv',label:'Prezzo vendita (\u20ac/kg)',min:1,max:100,step:0.5,val:vals.pv,fmt:v=>'\u20ac'+v.toFixed(1)},
+    {id:'simPa',label:'Prezzo acquisto (\u20ac/kg)',min:0.5,max:80,step:0.5,val:vals.pa,fmt:v=>'\u20ac'+v.toFixed(1)},
+    {id:'simQa',label:'Kg ordinati/mese',min:1,max:500,step:1,val:Math.max(1,Math.round(vals.qa)),fmt:v=>v+' kg'},
+    {id:'simSc',label:'Scarto fisso (%)',min:0,max:50,step:0.5,val:+vals.scPct.toFixed(1),fmt:v=>v.toFixed(1)+'%'},
+    {id:'simRim',label:'% Rimanenza stimata',min:0,max:50,step:0.5,val:+vals.rimPct.toFixed(1),fmt:v=>v.toFixed(1)+'%'},
+  ];
+  wrap.innerHTML=sliders.map(s=>'<div class="sim-row">'+
+    '<label>'+s.label+'</label>'+
+    '<input type="range" id="'+s.id+'" min="'+s.min+'" max="'+s.max+'" step="'+s.step+'" value="'+s.val+'">'+
+    '<span class="sim-val" id="'+s.id+'_v">'+s.fmt(s.val)+'</span>'+
+  '</div>').join('');
+  sliders.forEach(s=>{
+    const el=document.getElementById(s.id);
+    const vEl=document.getElementById(s.id+'_v');
+    if(el&&vEl){el.addEventListener('input',()=>{vEl.textContent=s.fmt(+el.value);updateSim();});}
+  });
+  updateSim();
+}
+function updateSim(){
+  const g=id=>+(document.getElementById(id)?.value||0);
+  const pv=g('simPv'),pa=g('simPa'),qa=g('simQa'),scPct=g('simSc'),rimPct=g('simRim');
+  const scKg=qa*scPct/100;
+  const rimKg=qa*rimPct/100;
+  const qv=Math.max(0,qa-scKg-rimKg);
+  const costAcq=qa*pa;
+  const ilLordo=qv*pv;
+  const netto=ilLordo-costAcq;
+  const mp=ilLordo>0?netto/ilLordo*100:0;
+  const out=document.getElementById('simOutput');
+  const mpEl=document.getElementById('simMargPct');
+  const mpBar=document.getElementById('simMargBar');
+  if(out)out.innerHTML=[
+    {l:'Kg vendibili',v:qv.toFixed(1)+' kg'},
+    {l:'Costo acquisto',v:'\u20ac'+Math.round(costAcq).toLocaleString('it-IT')},
+    {l:'Incasso lordo',v:'\u20ac'+Math.round(ilLordo).toLocaleString('it-IT')},
+    {l:'Margine netto',v:'<span style="color:'+(netto>=0?'#10b981':'#ef4444')+';">\u20ac'+Math.round(netto).toLocaleString('it-IT')+'</span>'},
+  ].map(k=>'<div class="kc"><div class="kl">'+k.l+'</div><div class="kv" style="font-size:16px;">'+k.v+'</div></div>').join('');
+  if(mpEl){mpEl.textContent=mp.toFixed(1)+'%';mpEl.style.color=mp>=35?'#10b981':mp>=15?'#f59e0b':'#ef4444';}
+  if(mpBar){mpBar.style.width=Math.max(0,Math.min(100,mp))+'%';mpBar.style.background=mp>=35?'#10b981':mp>=15?'#f59e0b':'#ef4444';}
+}
+
+// ── Waterfall plugin ─────────────────────────────────────────
+const waterfallLabelPlugin={
+  id:'waterfallLabel',
+  afterDatasetsDraw(chart){
+    const ctx=chart.ctx;const meta=chart.getDatasetMeta(0);
+    if(!meta||meta.hidden)return;
+    const steps=chart._waterfallSteps;if(!steps)return;
+    ctx.save();ctx.font='bold 10px sans-serif';ctx.textAlign='center';
+    meta.data.forEach((bar,i)=>{
+      const s=steps[i];if(!s)return;
+      const v=Math.round(s.v);
+      const sign=v>=0?'+':'';
+      ctx.fillStyle=v>=0?'#10b981':'#ef4444';
+      const top=Math.min(bar.y,bar.base);
+      ctx.textBaseline='bottom';
+      ctx.fillText(sign+'\u20ac'+Math.abs(v).toLocaleString('it-IT'),bar.x,top-3);
+    });
+    ctx.restore();
+  }
+};
+
+// ============================================================
 // RENDER: main
 // ============================================================
 function render(){
@@ -1780,6 +2051,12 @@ function render(){
   renderRawTable(data);
   renderPrePost();
   if(RAW2.length)renderActual();
+  // Nuovi grafici analitici (solo se le sezioni sono aperte)
+  renderPareto(a);
+  renderWaterfall(a);
+  renderHeatmap(data);
+  renderMeteo(data);
+  initSimulator(a);
   const msg=document.getElementById('loadMsg');
   if(crossFilter){
     const labels={cat:'Categoria',fish:'Pesce',supplier:'Fornitore',trend:'Periodo',pe:'Pescheria'};

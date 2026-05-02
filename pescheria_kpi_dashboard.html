@@ -88,6 +88,15 @@ select:focus{border-color:#3b82f6;box-shadow:0 0 0 2px rgba(59,130,246,.12);}
 .ldot{width:8px;height:8px;border-radius:50%;flex-shrink:0;display:inline-block;}
 
 .footer{font-size:9px;color:#9ca3af;margin-top:10px;padding:6px 0;}
+/* Slider simulatore */
+.sim-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.sim-row label{font-size:11px;color:#6b7280;min-width:160px;}
+.sim-row input[type=range]{flex:1;accent-color:#3b82f6;}
+.sim-row .sim-val{font-size:11px;font-weight:600;color:#1a1a1a;min-width:50px;text-align:right;}
+/* Heatmap */
+.hm-table{border-collapse:collapse;font-size:9px;}
+.hm-table th{padding:4px 6px;color:#6b7280;font-weight:600;white-space:nowrap;text-align:center;}
+.hm-table td{padding:3px 5px;text-align:center;border-radius:3px;min-width:36px;font-size:9px;font-weight:500;}
 
 /* Collapsible sections */
 .section-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;padding:0;text-align:left;}
@@ -136,37 +145,163 @@ select:focus{border-color:#3b82f6;box-shadow:0 0 0 2px rgba(59,130,246,.12);}
 <div class="load-msg" id="loadMsg"></div>
 <div class="load-msg" id="loadMsg2"></div>
 
-<!-- KPIs -->
-<div class="kg" id="kg"></div>
-
-<!-- Highlights: best/worst + best day/month/quarter -->
-<div class="hrow" id="hrow"></div>
-
-<!-- WoW / MoM / YoY -->
-<div class="wow-row" id="wowRow"></div>
-
-<!-- Trend + Category donut -->
-<div class="charts2">
-  <div class="card"><div id="ttl" class="stl"></div><div style="position:relative;height:210px;"><canvas id="tc"></canvas></div></div>
-  <div class="card"><div class="stl">Incasso per categoria</div><div style="position:relative;height:180px;"><canvas id="cc"></canvas></div><div class="legend" id="cleg"></div></div>
-</div>
-
-<!-- Fish bar + Scatter -->
-<div class="charts3">
-  <div class="card"><div class="stl">Margine netto per tipo di pesce (€)</div><div style="position:relative;" id="fcw"><canvas id="fc"></canvas></div></div>
-  <div class="card"><div class="stl">Revenue Map: Margine % vs Quantità venduta</div><div style="position:relative;height:280px;"><canvas id="scatter"></canvas></div></div>
-</div>
-
-<!-- Supplier spend -->
-<div class="charts3">
-  <div class="card"><div class="stl">Spesa per fornitore (€)</div><div style="position:relative;height:220px;"><canvas id="suppBar"></canvas></div></div>
-  <div class="card"><div class="stl">Distribuzione spesa fornitori</div><div style="position:relative;height:200px;"><canvas id="suppPie"></canvas></div><div class="legend" id="suppLeg"></div></div>
-</div>
-
-<!-- Detail table -->
+<!-- OVERVIEW (collassabile, chiusa di default) -->
 <div class="card">
-  <div class="stl">Dettaglio per tipo di pesce</div>
-  <div style="overflow-x:auto;max-height:380px;overflow-y:auto;"><table class="dtbl" id="tbl"></table></div>
+  <button class="section-toggle" onclick="toggleSection('overviewBody','overviewArrow')">
+    <span class="stl" style="margin-bottom:0;">📊 Overview — KPI, Trend, Grafici principali</span>
+    <span class="section-arrow" id="overviewArrow">▶</span>
+  </button>
+  <div class="section-body" id="overviewBody">
+    <div style="height:8px;"></div>
+
+    <!-- KPIs -->
+    <div class="kg" id="kg"></div>
+
+    <!-- Highlights: best/worst + best day/month/quarter -->
+    <div class="hrow" id="hrow"></div>
+
+    <!-- WoW / MoM / YoY -->
+    <div class="wow-row" id="wowRow"></div>
+
+    <!-- Trend + Category donut -->
+    <div class="charts2">
+      <div class="card">
+        <div id="ttl" class="stl"></div>
+        <div style="font-size:10px;color:#9ca3af;margin-bottom:6px;">Incasso lordo (barre blu) e netto (linea verde) per periodo. La linea tratteggiata arancione mostra il margine % sull'asse destro.</div>
+        <div style="position:relative;height:210px;"><canvas id="tc"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="stl">Incasso per categoria</div>
+        <div style="font-size:10px;color:#9ca3af;margin-bottom:6px;">Distribuzione % dell'incasso lordo per categoria merceologica. Clicca una fetta per filtrare tutti i grafici.</div>
+        <div style="position:relative;height:180px;"><canvas id="cc"></canvas></div>
+        <div class="legend" id="cleg"></div>
+      </div>
+    </div>
+
+    <!-- Fish bar + Scatter -->
+    <div class="charts3">
+      <div class="card">
+        <div class="stl">Margine netto per tipo di pesce (€)</div>
+        <div style="font-size:10px;color:#9ca3af;margin-bottom:6px;">Barre 100%: verde = margine netto %, grigio = costi. Ordinato per margine % decrescente. Clicca una barra per filtrare.</div>
+        <div style="position:relative;" id="fcw"><canvas id="fc"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="stl">Revenue Map: Margine % vs Quantità venduta</div>
+        <div style="font-size:10px;color:#9ca3af;margin-bottom:6px;">Ogni bolla = un tipo di pesce. Asse X = kg venduti, asse Y = margine %, dimensione bolla = incasso lordo. In alto a destra = pesci ideali.</div>
+        <div style="position:relative;height:280px;"><canvas id="scatter"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Supplier spend -->
+    <div class="charts3">
+      <div class="card">
+        <div class="stl">Spesa per fornitore (€)</div>
+        <div style="font-size:10px;color:#9ca3af;margin-bottom:6px;">Confronto spesa Fish Record (stimata da listino) vs Actual (fatture reali), suddivisa per fornitore. Clicca per filtrare.</div>
+        <div style="position:relative;height:220px;"><canvas id="suppBar"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="stl">Distribuzione spesa fornitori</div>
+        <div style="font-size:10px;color:#9ca3af;margin-bottom:6px;">Quota % di spesa per fornitore sul totale del periodo selezionato.</div>
+        <div style="position:relative;height:200px;"><canvas id="suppPie"></canvas></div>
+        <div class="legend" id="suppLeg"></div>
+      </div>
+    </div>
+
+    <!-- Detail table -->
+    <div class="card">
+      <div class="stl">Dettaglio per tipo di pesce</div>
+      <div style="font-size:10px;color:#9ca3af;margin-bottom:6px;">Clicca un'intestazione per ordinare. Clicca una riga per filtrare tutti i grafici. Pa/Pv = prezzi medi ponderati per kg acquistati.</div>
+      <div style="overflow-x:auto;max-height:380px;overflow-y:auto;"><table class="dtbl" id="tbl"></table></div>
+    </div>
+
+  </div><!-- /overviewBody -->
+</div><!-- /overview card -->
+
+<!-- NUOVI GRAFICI ANALITICI -->
+
+<!-- Curva di Pareto -->
+<div class="card">
+  <button class="section-toggle" onclick="toggleSection('paretoBody','paretoArrow')">
+    <span class="stl" style="margin-bottom:0;">📈 Curva di Pareto — quali pesci generano l'80% del fatturato</span>
+    <span class="section-arrow" id="paretoArrow">▶</span>
+  </button>
+  <div class="section-body" id="paretoBody">
+    <div style="height:8px;"></div>
+    <div style="font-size:10px;color:#9ca3af;margin-bottom:8px;">Pesci ordinati per fatturato lordo decrescente. Le barre mostrano il contributo di ogni pesce; la linea arancione è la % cumulata del fatturato totale. La soglia 80% (linea rossa tratteggiata) identifica i pesci chiave.</div>
+    <div style="overflow-x:auto;"><div style="position:relative;" id="paretoWrap"><canvas id="paretoChart"></canvas></div></div>
+  </div>
+</div>
+
+<!-- Waterfall -->
+<div class="card">
+  <button class="section-toggle" onclick="toggleSection('waterfallBody','waterfallArrow')">
+    <span class="stl" style="margin-bottom:0;">💧 Waterfall — dove spariscono i soldi</span>
+    <span class="section-arrow" id="waterfallArrow">▶</span>
+  </button>
+  <div class="section-body" id="waterfallBody">
+    <div style="height:8px;"></div>
+    <div style="font-size:10px;color:#9ca3af;margin-bottom:8px;">Decomposizione dal fatturato lordo al margine netto: ogni barra mostra quanto vale (verde) o costa (rosso) ogni voce. Partendo dall'incasso lordo, si sottraggono scarto, rimanenza, spese acquisto fino al margine netto finale.</div>
+    <div style="position:relative;height:280px;"><canvas id="waterfallChart"></canvas></div>
+  </div>
+</div>
+
+<!-- Heatmap -->
+<div class="card">
+  <button class="section-toggle" onclick="toggleSection('heatmapBody','heatmapArrow')">
+    <span class="stl" style="margin-bottom:0;">🌡️ Heatmap — vendite per giorno × tipo pesce</span>
+    <span class="section-arrow" id="heatmapArrow">▶</span>
+  </button>
+  <div class="section-body" id="heatmapBody">
+    <div style="height:8px;"></div>
+    <div style="font-size:10px;color:#9ca3af;margin-bottom:8px;">Verde = vendite alte, rosso = vendite basse. Usa questa mappa per pianificare gli ordini: ordina di più nei giorni con celle verdi per quel tipo di pesce.</div>
+    <div style="overflow-x:auto;"><div id="heatmapWrap"></div></div>
+  </div>
+</div>
+
+<!-- Impatto meteo -->
+<div class="card">
+  <button class="section-toggle" onclick="toggleSection('meteoBody','meteoArrow')">
+    <span class="stl" style="margin-bottom:0;">☀️ Impatto meteo sull'incasso medio giornaliero</span>
+    <span class="section-arrow" id="meteoArrow">▶</span>
+  </button>
+  <div class="section-body" id="meteoBody">
+    <div style="height:8px;"></div>
+    <div style="font-size:10px;color:#9ca3af;margin-bottom:8px;">Incasso lordo medio per giornata in base alle condizioni meteo. Le giornate di sole generano picchi di vendita. Con pioggia, ordina meno pesce fresco e punta sui congelati.</div>
+    <div style="position:relative;height:240px;"><canvas id="meteoChart"></canvas></div>
+  </div>
+</div>
+
+<!-- Simulatore pricing -->
+<div class="card">
+  <button class="section-toggle" onclick="toggleSection('simBody','simArrow')">
+    <span class="stl" style="margin-bottom:0;">🎛️ Simulatore pricing — impatto di una variazione di prezzo</span>
+    <span class="section-arrow" id="simArrow">▶</span>
+  </button>
+  <div class="section-body" id="simBody">
+    <div style="height:8px;"></div>
+    <div style="font-size:10px;color:#9ca3af;margin-bottom:10px;">Seleziona un pesce per caricare i valori storici medi. Sposta i cursori per vedere in tempo reale l'effetto sul margine netto mensile stimato.</div>
+    <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;">
+      <!-- Selettore pesce + sliders -->
+      <div style="min-width:280px;flex:1;">
+        <div style="margin-bottom:10px;">
+          <label style="font-size:11px;color:#6b7280;font-weight:600;">Pesce:</label>
+          <select id="simPesce" style="margin-left:8px;font-size:11px;padding:3px 8px;border:1px solid #d1d5db;border-radius:5px;"></select>
+        </div>
+        <div id="simSliders"></div>
+      </div>
+      <!-- Output -->
+      <div style="min-width:260px;flex:1;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;" id="simOutput"></div>
+        <div style="background:#f9fafb;border-radius:8px;padding:12px;text-align:center;">
+          <div style="font-size:10px;color:#6b7280;margin-bottom:4px;">Margine %</div>
+          <div id="simMargPct" style="font-size:32px;font-weight:700;color:#10b981;">—</div>
+          <div style="height:8px;background:#e5e7eb;border-radius:4px;margin-top:8px;overflow:hidden;">
+            <div id="simMargBar" style="height:100%;background:#10b981;border-radius:4px;transition:width .3s;width:0%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- SEZIONE ACTUAL vs FISH RECORD -->
