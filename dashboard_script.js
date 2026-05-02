@@ -75,8 +75,9 @@ const FISH_NORM=(function(){
     // Baccalà
     'baccala congelato':'Baccalà Congelato','baccalà salato':'Baccalà Salato',
     // Vongole
-    'vongole':'Vongole Veraci','vongole lupini':'Vongole Lupini','vongole v.':'Vongole Veraci',
+    'vongole':'Vongole Veraci','vongole v.':'Vongole Veraci',
     'vongole veraci':'Vongole Veraci',
+    'vongole lupini':'Lupini',
     // Sfusa grecia (cozze sfuse dalla Grecia)
     'sfusa grecia':'Sfusa Grecia',
     // Lupini

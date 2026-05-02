@@ -256,7 +256,7 @@ Schedule change:
 | `Baccala Congelato` | `Baccalà Congelato` |
 | `Baccalà salato` | `Baccalà Salato` |
 | `Vongole`, `Vongole v.`, `Vongole veraci` | `Vongole Veraci` |
-| `Vongole lupini` | `Vongole Lupini` |
+| `Vongole lupini` | `Lupini` |
 | `Lupini mega` | `Lupini Mega` |
 | `Lupini` | `Lupini` |
 
