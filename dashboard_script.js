@@ -1984,23 +1984,42 @@ function buildHeatmap(wrapId,data,metricFn,metricLabel){
     else{const s=(t-0.5)*2;return`rgb(${Math.round(245+(16-245)*s)},${Math.round(158+(185-158)*s)},${Math.round(11+(129-11)*s)})`;}
   }
   function textColor(t){return t>0.45?'#fff':'#1a1a1a';}
+  function fmtV(v){return v>=1000?'\u20ac'+(v/1000).toFixed(1)+'k':'\u20ac'+Math.round(v);}
   let html='<table class="hm-table"><thead><tr>'+
     '<th style="text-align:left;padding:4px 8px;">Giorno</th>'+
     allFish.map(f=>'<th style="white-space:nowrap;max-width:70px;overflow:hidden;text-overflow:ellipsis;" title="'+f+'">'+f+'</th>').join('')+
+    '<th style="padding:4px 8px;font-weight:700;border-left:2px solid #e5e7eb;">Totale</th>'+
     '</tr></thead><tbody>';
   dnIdx.forEach((dn,di)=>{
-    html+='<tr><td style="font-weight:600;white-space:nowrap;padding:4px 8px;font-size:10px;">'+DN_ROWS[di]+'</td>';
-    allFish.forEach(f=>{
+    // Totale riga = somma dei valori medi per giornata di tutti i pesci
+    let rowTotal=0;
+    const cells=allFish.map(f=>{
       const k=dn+'|'+f;const cnt=dayCnt[dn]?.size||1;
       const v=mat[k]?mat[k]/cnt:0;
-      const t=v/maxV;
+      rowTotal+=v;
+      return{v,t:v/maxV};
+    });
+    html+='<tr><td style="font-weight:600;white-space:nowrap;padding:4px 8px;font-size:10px;">'+DN_ROWS[di]+'</td>';
+    cells.forEach(({v,t})=>{
       const bg=v>0?heatColor(v):'#f3f4f6';
       const tc=v>0?textColor(t):'#9ca3af';
-      html+='<td style="background:'+bg+';color:'+tc+';min-width:44px;">'+(v>0?'\u20ac'+(v>=1000?(v/1000).toFixed(1)+'k':Math.round(v)):'-')+'</td>';
+      html+='<td style="background:'+bg+';color:'+tc+';min-width:44px;">'+(v>0?fmtV(v):'-')+'</td>';
     });
+    // Colonna totale: non colorata, bold
+    html+='<td style="border-left:2px solid #e5e7eb;font-weight:700;color:#1a1a1a;white-space:nowrap;padding:4px 8px;">'+(rowTotal>0?fmtV(rowTotal):'-')+'</td>';
     html+='</tr>';
   });
-  html+='</tbody></table>';
+  // Riga totale colonne
+  html+='<tr style="border-top:2px solid #e5e7eb;"><td style="font-weight:700;padding:4px 8px;font-size:10px;">Totale</td>';
+  let grandTotal=0;
+  allFish.forEach(f=>{
+    let colTotal=0;
+    dnIdx.forEach(dn=>{const k=dn+'|'+f;const cnt=dayCnt[dn]?.size||1;colTotal+=mat[k]?mat[k]/cnt:0;});
+    grandTotal+=colTotal;
+    html+='<td style="font-weight:700;color:#1a1a1a;white-space:nowrap;">'+(colTotal>0?fmtV(colTotal):'-')+'</td>';
+  });
+  html+='<td style="border-left:2px solid #e5e7eb;font-weight:700;color:#1a1a1a;padding:4px 8px;">'+(grandTotal>0?fmtV(grandTotal):'-')+'</td>';
+  html+='</tr></tbody></table>';
   wrap.innerHTML=html;
 }
 
@@ -2230,9 +2249,15 @@ function loadFromGoogleSheets(){
 }
 
 (function autoLoad(){
-  const SHEET_ID='1kh9G_d6SgLRGY6B3DNk8mk8cjXBlgfPATMtas45sbOs';
-  const DS1_URL='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/export?format=csv&gid=1404737086';
-  const DS2_URL='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/export?format=csv&gid=589730055';
+  // Google Sheets credentials loaded from config.js (not tracked in git)
+  // Fallback to hardcoded values if config not available
+  const cfg=window.DASHBOARD_CONFIG||{};
+  const SHEET_ID=cfg.sheetId||'';
+  const DS1_GID=cfg.ds1Gid||'';
+  const DS2_GID=cfg.ds2Gid||'';
+  const BASE='https://docs.google.com/spreadsheets/d/';
+  const DS1_URL=SHEET_ID&&DS1_GID?BASE+SHEET_ID+'/export?format=csv&gid='+DS1_GID:'';
+  const DS2_URL=SHEET_ID&&DS2_GID?BASE+SHEET_ID+'/export?format=csv&gid='+DS2_GID:'';
 
   // Carica DS1 (Dataset Pesce)
   document.getElementById('loadMsg').textContent='Caricamento dati da Google Sheets...';

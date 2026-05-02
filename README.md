@@ -43,14 +43,17 @@ The dashboard loads two datasets automatically on startup:
 
 Google Sheets IDs are hardcoded in `dashboard_script.js` (`autoLoad` function). If Google Sheets is unreachable, the dashboard falls back to local CSV files in the same folder.
 
-**To update the Google Sheets source**, change the `SHEET_ID` and `gid` values in `autoLoad()`:
+**To update the Google Sheets source**, copy `config.example.js` to `config.js` (not tracked in git) and fill in your values:
 ```javascript
-const SHEET_ID = '1kh9G_d6SgLRGY6B3DNk8mk8cjXBlgfPATMtas45sbOs';
-const DS1_URL = '...export?format=csv&gid=1404737086';  // Dataset Pesce
-const DS2_URL = '...export?format=csv&gid=589730055';   // Entrate/Uscite
+// config.js
+window.DASHBOARD_CONFIG = {
+  sheetId: 'YOUR_GOOGLE_SHEET_ID',
+  ds1Gid:  'YOUR_DS1_GID',   // tab: Dataset Pesce
+  ds2Gid:  'YOUR_DS2_GID',   // tab: Entrate/Uscite
+};
 ```
 
-> The Google Sheet must be shared as **"Anyone with the link can view"**.
+> `config.js` is listed in `.gitignore` — credentials never reach the repository.
 
 ---
 

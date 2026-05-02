@@ -221,10 +221,8 @@ fishery-sales-dashboard/
 - `Pescheria - Abascià Excel - Lavoro - Entrate_Uscite.csv` — Dataset 2 (actual cash, opzionale)
 
 **Google Sheets (fonte primaria):**
-- Sheet ID: `1kh9G_d6SgLRGY6B3DNk8mk8cjXBlgfPATMtas45sbOs`
-- DS1 gid: `1404737086` (tab: Lavoro - Dataset Pesce)
-- DS2 gid: `589730055` (tab: Lavoro - Entrate/Uscite)
-- URL pattern: `https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={GID}`
+- Sheet ID e gid sono in `config.js` (non tracciato in git)
+- Template pubblico: `config.example.js`
 - Il foglio deve essere condiviso come "chiunque con il link può visualizzare"
 
 ---

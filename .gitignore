@@ -14,5 +14,8 @@
 # Il file di esempio (sample_data.csv) è incluso nel repo
 Pescheria*.csv
 
+# Configurazione Google Sheets (credenziali private)
+config.js
+
 # Log e temp
 *.log
