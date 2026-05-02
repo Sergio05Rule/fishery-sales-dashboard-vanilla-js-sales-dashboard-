@@ -261,7 +261,7 @@ Schedule change:
 
 ### Passthrough names (title-case fallback, no explicit mapping needed)
 
-Alici · Anguille · Astice · Calamari · Cefalo · Cicala · Datterino · Filetto Ricomposto · Gallinella · Lanzardo · Melù · Noci Bianche · Obrina · Ostriche · Palombo · Paranza · Ricciola · Ricomposto · Salmone · Sbani · Serra · Sgombro · Suri · Tonno · Triglie · Trote Salmonate · Violette · Scampi
+Alici · Anguille · Astice · Calamari · Cefalo · Cicala · Datterino · Filetto Ricomposto · Gallinella · Lanzardo · Melù · Noci Bianche · Obrina · Ostriche · Palombo · Paranza · Ricciola · Ricomposto · Salmone · Sbani · Serra · Sgombro · Suri · Tonno · Triglie · Trote Salmonate · Violette
 
 ---
 
