@@ -72,7 +72,7 @@ const FISH_NORM=(function(){
     // Baccalà
     'baccala congelato':'Baccalà Congelato','baccalà salato':'Baccalà Salato',
     // Vongole
-    'vongole':'Vongole','vongole lupini':'Vongole Lupini','vongole v.':'Vongole Veraci',
+    'vongole':'Vongole Veraci','vongole lupini':'Vongole Lupini','vongole v.':'Vongole Veraci',
     // Lupini
     'lupini mega':'Lupini Mega','lupini':'Lupini',
   };

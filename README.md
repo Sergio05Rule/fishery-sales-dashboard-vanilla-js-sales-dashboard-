@@ -250,9 +250,7 @@ Schedule change:
 | `Spigole 3g` | `Spigole 3G` |
 | `Baccala Congelato` | `Baccalà Congelato` |
 | `Baccalà salato` | `Baccalà Salato` |
-| `Vongole` | `Vongole` |
-| `Vongole lupini` | `Vongole Lupini` |
-| `Vongole v.` | `Vongole Veraci` |
+| `Vongole`, `Vongole v.` | `Vongole Veraci` |
 | `Lupini mega` | `Lupini Mega` |
 | `Lupini` | `Lupini` |
 
