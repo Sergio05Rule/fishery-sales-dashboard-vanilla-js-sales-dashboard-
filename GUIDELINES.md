@@ -208,6 +208,7 @@ Le 3 sezioni avanzate sono chiuse di default. La funzione `toggleSection(bodyId,
 fishery-sales-dashboard/
 ├── pescheria_kpi_dashboard.html   # HTML + CSS inline
 ├── dashboard_script.js            # Tutta la logica JS
+├── Avvia Dashboard.command        # Launcher macOS (doppio click)
 ├── sample_data.csv                # Dati di esempio Dataset 1
 ├── Screenshot.png                 # Screenshot dashboard
 ├── README.md                      # Documentazione pubblica (sempre aggiornato)
@@ -218,6 +219,13 @@ fishery-sales-dashboard/
 **File CSV reali (non in repo):**
 - `Pescheria - Abascià Excel - Lavoro - Dataset Pesce.csv` — Dataset 1 (fish records)
 - `Pescheria - Abascià Excel - Lavoro - Entrate_Uscite.csv` — Dataset 2 (actual cash, opzionale)
+
+**Google Sheets (fonte primaria):**
+- Sheet ID: `1kh9G_d6SgLRGY6B3DNk8mk8cjXBlgfPATMtas45sbOs`
+- DS1 gid: `1404737086` (tab: Lavoro - Dataset Pesce)
+- DS2 gid: `589730055` (tab: Lavoro - Entrate/Uscite)
+- URL pattern: `https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={GID}`
+- Il foglio deve essere condiviso come "chiunque con il link può visualizzare"
 
 ---
 
@@ -252,9 +260,10 @@ Quando si aggiunge una nuova tabella, aggiungere sempre `max-height` e `overflow
 
 - [ ] `node --check dashboard_script.js` → nessun errore di sintassi
 - [ ] Se modificata la mappa pesce → verifica allineamento JS/README (script sezione 2)
-- [ ] Se aggiunto un grafico → ha `onClick` con cross-filter?
+- [ ] Se aggiunto un grafico → ha `onClick` con cross-filter? È collegato a `data` filtrata?
 - [ ] Se aggiunto un tipo di cross-filter → aggiornato `getFiltered()` e `labels` in `render()`?
-- [ ] Se aggiunta una sezione espandibile → aggiornata `toggleSection()` se necessario?
+- [ ] Se aggiunta una sezione espandibile → aggiornata `toggleSection()` con ridisegno?
 - [ ] Se modificato Dataset 2 → aggiornata sezione `Dataset 2` nel README?
+- [ ] Se modificato Google Sheets → aggiornati SHEET_ID/gid in `autoLoad()` e README?
 - [ ] README aggiornato se necessario
 - [ ] GUIDELINES aggiornato se necessario

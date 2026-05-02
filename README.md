@@ -1,73 +1,134 @@
 # Fishery Sales Dashboard
 
-An interactive, client-side KPI dashboard for multi-location fishery sales analytics. Built with vanilla HTML/JS and Chart.js — no backend, no build step, no framework. Drop in a CSV exported from Excel or Google Sheets and get instant analytics.
+An interactive, client-side KPI dashboard for multi-location fishery sales analytics. Built with vanilla HTML/JS and Chart.js — no backend, no build step, no framework. Data loads automatically from Google Sheets (public) or from local CSV files.
 
 ![Dashboard screenshot](Screenshot.png)
 
 ---
 
+## Quick start
+
+### Option A — Double-click launcher (macOS, easiest)
+
+Double-click **`Avvia Dashboard.command`** in the project folder. It starts a local HTTP server and opens the dashboard in your browser automatically.
+
+> First time: macOS may ask for confirmation → right-click → **Open** → **Open**.
+
+### Option B — Terminal
+
+```bash
+cd "/path/to/fishery-sales-dashboard"
+python3 -m http.server 8000
+# then open: http://localhost:8000/pescheria_kpi_dashboard.html
+```
+
+### Why HTTP server?
+
+The dashboard loads data via `fetch()`. Browsers block network requests from `file://` URLs (CORS policy). An HTTP server — even a local one — bypasses this restriction. Google Sheets also requires HTTP to serve public CSV exports.
+
+### Option C — Manual file upload
+
+Open `pescheria_kpi_dashboard.html` directly in the browser (no server needed) and use the **📂 Carica CSV** and **📂 Carica Actual** buttons to load files manually.
+
+---
+
+## Data sources
+
+The dashboard loads two datasets automatically on startup:
+
+| Dataset | Source | Content |
+|---------|--------|---------|
+| **Dataset 1** — Fish records | Google Sheets (tab: *Lavoro - Dataset Pesce*) | Daily fish purchases, sales, margins per location |
+| **Dataset 2** — Actual cash | Google Sheets (tab: *Lavoro - Entrate/Uscite*) | Real cash register entries and supplier payments |
+
+Google Sheets IDs are hardcoded in `dashboard_script.js` (`autoLoad` function). If Google Sheets is unreachable, the dashboard falls back to local CSV files in the same folder.
+
+**To update the Google Sheets source**, change the `SHEET_ID` and `gid` values in `autoLoad()`:
+```javascript
+const SHEET_ID = '1kh9G_d6SgLRGY6B3DNk8mk8cjXBlgfPATMtas45sbOs';
+const DS1_URL = '...export?format=csv&gid=1404737086';  // Dataset Pesce
+const DS2_URL = '...export?format=csv&gid=589730055';   // Entrate/Uscite
+```
+
+> The Google Sheet must be shared as **"Anyone with the link can view"**.
+
+---
+
 ## Features
 
-### KPIs & Metrics
-- **Gross / net revenue** for any selected period
-- **Gross margin %** aggregated and per fish type
-- **Kg sold, waste, leftover stock** with immobilized value
-- **Total purchase cost** per period
+### Collapsible sections (all closed by default)
+
+| Section | Contents |
+|---------|----------|
+| 📊 **Overview** | KPIs, WoW/MoM/YoY, Trend chart, Category donut, Pareto curve (lordo + netto), Waterfall margin, Heatmap day×fish (lordo + netto), Weather impact, Supplier donut |
+| 🐟 **Analisi pesci e margini** | 100% stacked fish bar, Revenue Map 4 quadrants, Fish detail table |
+| 🎛️ **Simulatore pricing** | Interactive sliders to simulate margin impact of price/quantity changes |
+| 📊 **Actual vs Fish Record** | DS2 vs DS1 comparison: KPIs, WoW cards, Waterfall actual, 5 comparison charts, detail table with delta comments |
+| 📅 **Pre/Post 10/02/2026** | Analysis of the operational schedule change |
+| 🗃️ **Dati grezzi** | All filtered rows from Dataset 1, sortable |
 
 ### Filters
-- **Granularity**: Day (with weekday name: Mon 01/04/2026) · Week · Month · Quarter · Year
-- **Cascading multi-select filters**: Year → Month → Week → Location → Supplier
-  - Ctrl+click to select multiple values simultaneously
-  - Filters update dynamically based on upstream selections
-- **Day-of-week filter**: multi-select (Monday–Sunday), applies to all charts and sections
-- All dropdown filters apply to both Dataset 1 (fish records) and Dataset 2 (actual cash) simultaneously
 
-### Cross-filtering (Power BI / QuickSight style)
-- Click any chart (category, fish, supplier, location, trend bar) to filter all others
-- Click a table row to filter all charts
-- Active filter badge with one-click reset
-- Supported cross-filter types: `cat` (category), `fish` (fish name), `supplier`, `pe` (location), `trend` (time period)
+- **Granularity**: Day (with weekday name) · Week · Month · Quarter · Year
+- **Cascading multi-select**: Year → Month → Week → Location → Supplier (Ctrl+click for multiple)
+- **Day-of-week filter**: multi-select Monday–Sunday
+- All filters apply to both datasets simultaneously
+
+### Cross-filtering (Power BI style)
+
+Click any chart to filter all others. Supported types:
+
+| Type | Activated by |
+|------|-------------|
+| `cat` | Category donut |
+| `fish` | Fish bar, Revenue Map, table row |
+| `supplier` | Supplier donut |
+| `pe` | Location (Pre/Post charts) |
+| `trend` | Trend bar chart |
+
+Active filter shown as badge with one-click reset.
 
 ### Charts
 
 | Chart | Description |
 |-------|-------------|
-| Trend (gross/net + margin %) | Bar chart + dual-line, secondary Y axis for margin. **Clickable** — click a bar to cross-filter all other charts by that period |
-| Revenue by category | Donut with percentage legend |
-| Net margin by fish | 100% stacked horizontal bars sorted by margin %, labeled with € gross/net. Hover shows margin %, costs %, gross, net, kg sold |
-| Revenue Map | Bubble chart: X = kg sold, Y = margin %, bubble size = gross revenue |
-| Supplier spend | Vertical bars + donut |
+| Trend | Gross/net bars + margin % line (secondary axis). Clickable for cross-filter |
+| Category donut | % distribution of gross revenue by category. Value labels on slices |
+| Pareto (lordo) | Fish sorted by gross revenue. Blue = top 80%, orange cumulative line, red 80% threshold |
+| Pareto (netto) | Same but sorted by net margin |
+| Waterfall (Fish) | Gross → -Purchases → -Waste → Net. Labels show € and % of gross |
+| Heatmap (lordo) | Rows = weekdays, columns = all fish. Tricolor: red→orange→green |
+| Heatmap (netto) | Same but by net margin |
+| Weather impact | Average daily gross/net by weather condition |
+| Revenue Map | Bubble chart with 4 quadrants: 🌟 Star / 📦 Volume / 💎 Premium / ⚠️ Review |
+| Supplier donut | Spend % per supplier with € value labels on slices |
+| Fish bar | 100% stacked: green = margin %, grey = costs. Sorted by margin % desc |
 
-### Fish detail table
-- Sortable by any column (click header)
-- Scrollable (max height 380px)
-- Cross-filter on row click
-- Columns: Fish · Category · Gross € · Margin € · Margin % · Avg purchase price €/kg · Avg sale price €/kg · Kg sold · Waste kg · Leftover kg
-- Avg prices are **volume-weighted** over the selected period
+### Actual vs Fish Record
+
+Compares Dataset 2 (real cash) against Dataset 1 (fish records). Join key: **Date + Location**.
+
+| Metric | Dataset 1 | Dataset 2 |
+|--------|-----------|-----------|
+| Gross revenue | Σ(Qv × Pv) | Cash register entries |
+| Supplier costs | Σ(Qa × Pa) | Actual supplier payments |
+| Extra costs | Not present | Fuel, other expenses |
+| Net | Gross − Costs | Cash − All costs |
+
+Delta cells show contextual comments:
+- **Δ Gross**: 📈 "Hai incassato più del previsto!" / 📉 "Hai incassato meno"
+- **Δ Supplier**: 💰 "Sconto fornitori!" / ⚠️ "Pagato molto di più — verifica entry mancanti" (threshold >€100)
+- **Δ Net**: 🏆 "Margini rispettati!" / 🚨 "Margine molto sotto la stima"
+- **Neutral** (|diff| < €1 or < 0.5pp): ✓ "Match aspettative"
+
+### Pricing simulator
+
+Select a fish → sliders auto-populate with historical averages (filtered period). Adjust price, purchase cost, kg ordered, waste %, leftover % to see real-time impact on net margin.
 
 ### Highlights
+
 - **Top 3 / Bottom 3 fish** by margin %
-- **Best day / week / month / quarter / year** showing net, gross, volume and margin
-
-### Period-over-period analysis
-- **WoW** (Week over Week), **MoM** (Month over Month), **YoY** (Year over Year)
-- Compares only **complete periods** — the current week/month/year is excluded automatically
-- Each card shows the period date range (weeks show start–end dates)
-- Metrics: Δ net revenue, Δ gross revenue, Δ volume (kg), Δ margin %, Δ costs
-
-### Collapsible sections (closed by default)
-Three advanced sections are collapsed by default and expand on click:
-
-| Section | Description |
-|---------|-------------|
-| 📊 Actual vs Fish Record | Compares Dataset 2 (real cash register) against Dataset 1 (fish records). Join key: Date + Location. Includes best period highlights, period-over-period comparison cards, and a detail table with contextual delta comments (neutral threshold: €1 / 0.5pp) |
-| 📅 Pre/Post 10/02/2026 | Analysis of the operational schedule change (which location operates on which day) |
-| 🗃 Raw data | All filtered rows from Dataset 1, sortable, with row counter |
-
-### Tables
-- **Fish detail table**: sortable, scrollable, cross-filter on row click
-- **Raw data table** (collapsible): all Dataset 1 rows after active filters, sortable
-- **Actual vs Fish comparison table** (collapsible): per-day join of both datasets with delta columns
+- **Best day / week / month / quarter / year** — net, gross, volume, margin %
 
 ---
 
@@ -76,72 +137,16 @@ Three advanced sections are collapsed by default and expand on click:
 ```
 fishery-sales-dashboard/
 ├── pescheria_kpi_dashboard.html   # Full app (HTML + inline CSS)
-├── dashboard_script.js            # JS logic: parsing, dedup, aggregation, charts
-├── sample_data.csv                # Sample data (expected CSV structure for Dataset 1)
+├── dashboard_script.js            # All JS logic
+├── Avvia Dashboard.command        # macOS double-click launcher
+├── sample_data.csv                # Sample data (Dataset 1 structure reference)
 ├── Screenshot.png                 # Dashboard screenshot
-├── README.md                      # Public documentation
-├── GUIDELINES.md                  # Development guidelines (fish mapping, cross-filter rules, etc.)
+├── README.md                      # This file
+├── GUIDELINES.md                  # Development guidelines
 └── .gitignore
 ```
 
-> **Real CSV files are not included in this repository** (contain business-sensitive data).  
-> Dataset 1: `Pescheria - Abascià Excel - Lavoro - Dataset Pesce.csv`  
-> Dataset 2: `Pescheria - Abascià Excel - Lavoro - Entrate_Uscite.csv`  
-> Use `sample_data.csv` as a reference for Dataset 1 structure.
-
----
-
-## Usage
-
-### Option A — Local HTTP server (recommended)
-Automatic CSV loading requires an HTTP server (browsers block `fetch()` on `file://`).
-
-```bash
-# In the project folder:
-python3 -m http.server 8000
-# then open: http://localhost:8000/pescheria_kpi_dashboard.html
-```
-
-Both CSV files must be in the same folder as the HTML file:
-- `Pescheria - Abascià Excel - Lavoro - Dataset Pesce.csv` (Dataset 1 — fish records)
-- `Pescheria - Abascià Excel - Lavoro - Entrate_Uscite.csv` (Dataset 2 — actual cash, optional)
-
-Both are loaded automatically on page open. Dataset 2 is optional — if not found, the Actual section remains hidden until manually loaded via the **📂 Carica Actual** button.
-```
-Pescheria - Abascià Excel - Lavoro - Dataset Pesce.csv
-```
-and placed in the same folder as the HTML file.
-
-### Option B — Manual file load
-Open `pescheria_kpi_dashboard.html` directly in the browser and click the **📂 Load CSV** button in the top-right corner. Works without a server.
-
----
-
-## Expected CSV format
-
-The file must be a comma-separated CSV with column headers in the first row. Relevant columns:
-
-| Column | Type | Example |
-|--------|------|---------|
-| `Data` | Date `DD/MM/YYYY` | `03/04/2026` |
-| `Pescheria` | Text | `Grassano` |
-| `Pesce` | Text | `Calamari` |
-| `Fornitore` | Text | `Meridional` |
-| `Categoria` | Text | `Decongelato` |
-| `Qta. Acquistata per pescheria (Kg)` | IT number | `30` |
-| `Prezzo Acquisto al Kg` | IT currency | `8,50 €` |
-| `Prezzo Vendita Medio (Kg)` | IT currency | `15,00 €` |
-| `Rimanenza o non venduto (Kg)` | IT number | `3,6` |
-| `Gettato (Kg)` | IT number | `0` |
-| `Scarto Totale Lotto (automatico)` | IT number | `3,6` |
-| `Spese` | IT currency | `255,00 €` |
-| `Incasso (lordo)` | IT currency | `396,00 €` |
-| `Incasso (netto)` | IT currency | `141,00 €` |
-| `Margine Lordo (%)` | IT percentage | `35,61%` |
-| `Qta. Venduta (Kg)` | IT number | `26,4` |
-| `ROI Pesce %` | IT percentage | `43,33%` |
-
-> Numbers use **comma as decimal separator** and **period as thousands separator** (Italian format). Currency values may have the `€` symbol before or after the number.
+> Real CSV files and the Google Sheet are not included in this repository.
 
 ---
 
@@ -149,72 +154,53 @@ The file must be a comma-separated CSV with column headers in the first row. Rel
 
 ### 1. Automatic deduplication
 
-The source dataset contained **duplicate day-blocks** — entire days of sales inserted twice (likely from a double export or copy-paste in Excel). Out of 2,002 original rows, 279 were duplicates.
+Primary key (9 fields): `Date · Location · Fish (normalized) · Supplier · Category · Qty · Purchase price · Sale price · Leftover qty`
 
-**Primary key used for deduplication** (9 fields):
-
-```
-Date · Location · Fish (normalized) · Supplier · Category ·
-Qty Purchased · Purchase Price · Sale Price · Leftover Qty
-```
-
-Implementation in `buildFromCSV()` inside `dashboard_script.js`:
-
-```javascript
-const pk = [
-  d.toISOString().slice(0, 10),  // Date
-  pe,                             // Location
-  psc,                            // Fish (already normalized)
-  forn,                           // Supplier
-  cat,                            // Category
-  (row[iQa] || '').trim(),        // Qty Purchased
-  (row[iPa] || '').trim(),        // Purchase Price
-  (row[iPv] || '').trim(),        // Sale Price
-  (row[iRim] || '').trim(),       // Leftover Qty
-].join('|');
-
-if (seenPK.has(pk)) continue;    // skip duplicate
-seenPK.add(pk);
-```
-
-The deduplication runs **in memory at load time** — the source CSV is never modified. Every time you reload the same file, duplicates are removed automatically.
-
-**Why these 9 fields and not all 28?**  
-Using all fields as the key would keep rows with the same transaction but a trivially different field (e.g. `Meteo` empty vs "Sole"). The 9-field key uniquely identifies a real commercial transaction.
-
-**Duplicate blocks found in the original dataset:**
-
-| Date | Location | Duplicate rows |
-|------|----------|---------------:|
-| 06/03/2026 | Grassano + Brigante | 34 |
-| 09/03/2026 | Grassano | 8 |
-| 10/03/2026 | Grottole | 11 |
-| 18/03/2026 | Grassano | 22 |
-| 19/03/2026 | Grottole | 17 |
-| 20/03/2026 | Grassano | 29 |
-| 23/03/2026 | Grassano | 7 |
-| 24/03/2026 | Grottole | 10 |
-| 25/03/2026 | Grassano | 22 |
-| 26/03/2026 | Grottole | 14 |
-| 27/03/2026 | Grassano + Brigante | 33 |
-| 30/03/2026 | Grassano | 9 |
-| 31/03/2026 | Grottole | 15 |
-| 01/04/2026 | Grassano | 19 |
-| 02/04/2026 | Grottole | 15 |
-| 03/04/2026 | Grassano | 13 |
-| 27/02/2026 | Grassano | 1 |
-| **Total** | | **279** |
-
-> **Alternative**: clean the file at source in Excel/Google Sheets using  
-> `Data → Remove Duplicates`, selecting the same 9 columns as the key.
-
----
+Rows with identical keys are dropped at parse time. The source file is never modified.
 
 ### 2. Fish name normalization
 
-The dataset contained **118 unique fish names** across all records. The `FISH_NORM()` function in `dashboard_script.js` maps spelling variants to a canonical name before any aggregation or deduplication. Names not in the explicit map are title-cased automatically.
+82 raw variants → 48 canonical names via `FISH_NORM()`. Normalization runs before deduplication.
 
-**Explicit normalization map** (82 raw variants → 48 canonical names):
+See the full mapping table in the **[Fish name normalization](#2-fish-name-normalization)** section below.
+
+### 3. Italian number format parsing
+
+Handles: `"8,50 €"` / `"€ 141,00"` / `"35,61%"` / `"26,4"` — comma decimal, period thousands, € symbol.
+
+### 4. Calculation formulas
+
+Values are read directly from the CSV (already computed by Excel):
+
+| Metric | Formula | CSV column |
+|--------|---------|------------|
+| Purchase cost | `Qty × Purchase price` | `Spese` |
+| Gross revenue | `Qty sold × Sale price` | `Incasso (lordo)` |
+| Net revenue | `Gross − Purchase cost` | `Incasso (netto)` |
+| Margin % | `Net / Gross × 100` | `Margine Lordo (%)` |
+| Qty sold | `Qty − Waste − Leftover − Discarded` | `Qta. Venduta (Kg)` |
+
+**Aggregated margin %** = volume-weighted average: `Σ(Net) / Σ(Gross) × 100`
+
+### 5. Delta neutrality threshold
+
+All delta cells use a neutrality threshold to avoid false alarms on rounding noise:
+- Monetary deltas: neutral if `|diff| < €1`
+- Margin % deltas: neutral if `|diff| < 0.5pp`
+
+### 6. Pre/Post 10/02/2026 analysis
+
+Cutoff date: `CUTOFF_PP = new Date(2026, 1, 10)`
+
+Schedule change:
+- **Pre**: Grassano + Grottole operated together Mon/Wed/Fri
+- **Post**: Thu = Grottole, Fri = Grassano, Mon = Grassano, Tue = Grottole, Wed = Grassano
+
+---
+
+## Fish name normalization
+
+### Explicit normalization map (82 variants → 48 canonical names)
 
 | Raw variants in CSV | Canonical name |
 |--------------------|----------------|
@@ -234,8 +220,8 @@ The dataset contained **118 unique fish names** across all records. The `FISH_NO
 | `Orata`, `Orate`, `Orata a`, `Orate a` | `Orata A` |
 | `Orata g`, `Orate g` | `Orata G` |
 | `Pancasio`, `Pangasio` | `Pangasio` |
-| `Persico`, `Filetto persico` | `Filetto Persico` |
 | `Pesce spada` | `Pesce Spada` |
+| `Persico`, `Filetto persico` | `Filetto Persico` |
 | `Pescatrice`, `Pescatrici` | `Pescatrice` |
 | `Polpi`, `Polpo`, `Polipo` | `Polpo` |
 | `Polpo T7`, `Polpo  T7` | `Polpo T7` |
@@ -267,140 +253,9 @@ The dataset contained **118 unique fish names** across all records. The `FISH_NO
 | `Lupini mega` | `Lupini Mega` |
 | `Lupini` | `Lupini` |
 
-**Passthrough names** (already correctly cased, no normalization needed):
+### Passthrough names (title-case fallback, no explicit mapping needed)
 
-| Name in CSV | Used as-is |
-|-------------|-----------|
-| `Alici` | `Alici` |
-| `Anguille` | `Anguille` |
-| `Astice` | `Astice` |
-| `Calamari` | `Calamari` |
-| `Cefalo` | `Cefalo` |
-| `Cicala` | `Cicala` |
-| `Datterino` | `Datterino` |
-| `Filetto ricomposto` | `Filetto Ricomposto` |
-| `Gallinella` | `Gallinella` |
-| `Lanzardo` | `Lanzardo` |
-| `Melù` | `Melù` |
-| `Noci Bianche` | `Noci Bianche` |
-| `Obrina` | `Obrina` |
-| `Ostriche` | `Ostriche` |
-| `Palombo` | `Palombo` |
-| `Paranza` | `Paranza` |
-| `Persico` | `Persico` || `Ricciola` | `Ricciola` |
-| `Ricomposto` | `Ricomposto` |
-| `Salmone` | `Salmone` |
-| `Sbani` | `Sbani` |
-| `Serra` | `Serra` |
-| `Sgombro` | `Sgombro` |
-| `Suri` | `Suri` |
-| `Tonno` | `Tonno` |
-| `Triglie` | `Triglie` |
-| `Trote Salmonate` | `Trote Salmonate` |
-| `Violette` | `Violette` |
-
----
-
-### 3. Italian number format parsing
-
-The CSV uses Italian number formatting (comma decimal, period thousands, € symbol). The `parseNum()` function handles all formats present in the file:
-
-```javascript
-// Handles: "8,50 €" / "€ 141,00" / "35,61%" / "26,4" / ""
-function parseNum(s) {
-  let v = String(s).trim()
-    .replace(/€/g, '')
-    .replace(/\s/g, '')
-    .replace(/%/g, '')
-    .replace(/\./g, '')   // remove thousands separator
-    .replace(/,/g, '.');  // convert IT decimal → EN decimal
-  const n = parseFloat(v);
-  return isFinite(n) ? n : 0;
-}
-```
-
----
-
-## Dataset 2 — Actual cash register (`Entrate_Uscite.csv`)
-
-### Structure
-
-Each day of operations produces a block of rows:
-
-| Row type | `Tipo Spesa` | `Dettaglio A` | `Dettaglio B` | `Cifra` |
-|----------|-------------|---------------|---------------|---------|
-| Daily revenue | `Entrata` | `Guadano` | `Pescheria Grassano` | `€ 470,00` |
-| Supplier payment | `Uscita` | `Fornitori` | `Meridional` | `-€ 175,00` |
-| Extra costs | `Uscita` | `Spese` | `Altro` | `-€ 35,00` |
-
-Extra costs include fuel, miscellaneous expenses — **not present in Dataset 1**.
-
-### Join key: `Date + Location`
-
-The location is extracted from `Dettaglio B` of `Entrata` rows (e.g. `"Pescheria Grassano"` → `Grassano`). All `Uscita` rows for the same date are associated to that location.
-
-### What is compared
-
-| Metric | Dataset 1 (fish records) | Dataset 2 (actual) |
-|--------|--------------------------|-------------------|
-| Gross revenue | Σ(Qv × Pv) per day | `Entrata` amount |
-| Supplier costs | Σ(Qa × Pa) per day | Σ `Uscita/Fornitori` |
-| Extra costs | Not present | Σ `Uscita/Spese` |
-| Net (excl. extras) | Gross − Supplier costs | Entrata − Fornitori |
-| Net (incl. extras) | — | Entrata − Fornitori − Spese |
-
-### Delta neutrality threshold
-
-All delta cells use a neutrality threshold to avoid false alarms on rounding noise:
-- **Monetary deltas** (€): neutral if `|diff| < €1` → shows "✓ Match aspettative" in grey
-- **Margin % deltas** (pp): neutral if `|diff| < 0.5pp` → same neutral treatment
-- **Supplier chart tooltip**: neutral if `|diff| < €1`
-
-This prevents `-€0 -0.0% 📉` false negatives.
-
-### No double counting
-
-The two datasets are aggregated **separately** and shown **side by side**. They are never summed together. Days present in only one dataset are highlighted in yellow in the comparison table.
-
-### Filters
-
-The main dropdown filters (Year, Month, Location) apply to both datasets simultaneously. The Actual-specific filters (Tipo Spesa, Dettaglio A, Dettaglio B) apply only to Dataset 2.
-
----
-
-### 4. Calculation formulas
-
-Economic values are read **directly from the CSV** (already computed by Excel) rather than recalculated, ensuring consistency with the source file:
-
-| Metric | Excel formula | CSV column |
-|--------|--------------|------------|
-| Purchase cost | `Qty × Purchase price` | `Spese` |
-| Gross revenue | `Qty sold × Sale price` | `Incasso (lordo)` |
-| Net revenue | `Gross − Purchase cost` | `Incasso (netto)` |
-| Margin % | `Net / Gross × 100` | `Margine Lordo (%)` |
-| ROI % | `(Sale price − Purchase price) / Sale price × 100` | `ROI Pesce %` |
-| Qty sold | `Qty purchased − Waste − Leftover − Discarded` | `Qta. Venduta (Kg)` |
-
-**Aggregated margin % (volume-weighted average)**
-
-When showing the margin % for a fish across multiple days or locations, a simple average of row percentages would give equal weight to large and small batches — which is economically incorrect.
-
-Example with two batches of different sizes:
-
-| Batch | Gross | Net | Row margin % |
-|-------|------:|----:|-------------:|
-| Small batch | €100 | €20 | 20% |
-| Large batch | €900 | €360 | 40% |
-| **Total** | **€1,000** | **€380** | |
-
-- Simple average: (20 + 40) / 2 = **30%** ← wrong, treats both batches equally
-- Volume-weighted: 380 / 1,000 × 100 = **38%** ← correct, the large batch (€900) carries 9× more weight
-
-The dashboard always uses the volume-weighted method:
-
-```javascript
-mp: f.il > 0 ? f.inn / f.il * 100 : 0   // Σ net / Σ gross × 100
-```
+Alici · Anguille · Astice · Calamari · Cefalo · Cicala · Datterino · Filetto Ricomposto · Gallinella · Lanzardo · Melù · Noci Bianche · Obrina · Ostriche · Palombo · Paranza · Ricciola · Ricomposto · Salmone · Sbani · Serra · Sgombro · Suri · Tonno · Triglie · Trote Salmonate · Violette
 
 ---
 
@@ -416,7 +271,7 @@ Loaded via CDN. No Node.js, no build step, no other dependencies.
 
 ## Browser compatibility
 
-Tested on Chrome 120+, Firefox 121+, Safari 17+. Requires ES2020.
+Chrome 120+, Firefox 121+, Safari 17+. Requires ES2020. Must be served via HTTP (not `file://`).
 
 ---
 
