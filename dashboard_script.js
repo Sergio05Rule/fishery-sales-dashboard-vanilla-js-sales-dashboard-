@@ -1000,6 +1000,12 @@ function toggleSection(bodyId,arrowId){
   // (Chart.js non disegna correttamente su canvas nascosti)
   if(!isOpen&&bodyId==='actualBody'&&RAW2.length)renderActual();
   if(!isOpen&&bodyId==='prepostBody')renderPrePost();
+  if(!isOpen&&(bodyId==='overviewBody'||bodyId==='fishBody')){
+    // Ridisegna i grafici che erano nascosti
+    const allData=getData();const data=getFiltered(allData);const a=agg(data);
+    if(bodyId==='overviewBody'){renderPareto(a);renderWaterfall(a);renderHeatmap(data);renderMeteo(data);}
+    if(bodyId==='fishBody'){renderFishBar(a);renderScatter(a);renderTable(a);}
+  }
 }
 
 // ============================================================
@@ -1295,14 +1301,14 @@ function renderActual(){
   // Highlights e WoW
   renderActualHighlights(fishPeriods,actPeriods);
   renderActualWoW(fishPeriods,actPeriods);
-  // Waterfall actual
-  renderWaterfallActual(totFish,totAct);
   const labels=allKeys.map(k=>(actMap[k]||fishMap[k]).l);
   // Totali
   const totFish={il:fishPeriods.reduce((s,p)=>s+p.il,0),inn:fishPeriods.reduce((s,p)=>s+p.inn,0),sp:fishPeriods.reduce((s,p)=>s+p.sp,0)};
   const totAct={entrata:actPeriods.reduce((s,p)=>s+p.entrata,0),forn:actPeriods.reduce((s,p)=>s+p.forn_pesce,0),benz:actPeriods.reduce((s,p)=>s+p.benzina,0),altro:actPeriods.reduce((s,p)=>s+p.altro,0)};
   totAct.netto_full=totAct.entrata-totAct.forn-totAct.benz-totAct.altro;
   totAct.netto_forn=totAct.entrata-totAct.forn;
+  // Waterfall actual (dopo i totali)
+  renderWaterfallActual(totFish,totAct);
   const mpFish=totFish.il>0?totFish.inn/totFish.il*100:0;
   const mpActFull=totAct.entrata>0?totAct.netto_full/totAct.entrata*100:0;
   // KPI
@@ -2186,7 +2192,7 @@ function render(){
   renderRawTable(data);
   renderPrePost();
   if(RAW2.length)renderActual();
-  // Nuovi grafici analitici (solo se le sezioni sono aperte)
+  // Nuovi grafici analitici — ricevono data filtrata (rispettano cross-filter e filtri dropdown)
   renderPareto(a);
   renderWaterfall(a);
   renderHeatmap(data);
