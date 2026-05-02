@@ -141,6 +141,15 @@ select:focus{border-color:#3b82f6;box-shadow:0 0 0 2px rgba(59,130,246,.12);}
   <span class="cg-lbl">Giorno:</span><select id="fGiorno"><option value="tutti">Tutti</option></select>
   <label class="upload-btn">📂 Carica CSV<input type="file" id="csvIn" accept=".csv"></label>
   <label class="upload-btn" style="background:#f0fdf4;border-color:#86efac;color:#166534;">📂 Carica Actual<input type="file" id="csvIn2" accept=".csv"></label>
+  <button class="upload-btn" onclick="document.getElementById('gsPanel').style.display=document.getElementById('gsPanel').style.display==='none'?'flex':'none'" style="background:#eff6ff;border-color:#93c5fd;color:#1d4ed8;">🔗 Google Sheets</button>
+</div>
+<div id="gsPanel" style="display:none;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 0;font-size:11px;">
+  <span style="color:#6b7280;font-weight:600;">Dataset 1 URL:</span>
+  <input id="gsUrl1" type="text" placeholder="https://docs.google.com/spreadsheets/d/.../export?format=csv" style="flex:1;min-width:300px;padding:4px 8px;border:1px solid #d1d5db;border-radius:5px;font-size:11px;">
+  <span style="color:#6b7280;font-weight:600;">Dataset 2 URL:</span>
+  <input id="gsUrl2" type="text" placeholder="https://docs.google.com/spreadsheets/d/.../export?format=csv&gid=..." style="flex:1;min-width:300px;padding:4px 8px;border:1px solid #d1d5db;border-radius:5px;font-size:11px;">
+  <button onclick="loadFromGoogleSheets()" style="padding:4px 12px;background:#3b82f6;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:11px;">Carica</button>
+  <span style="font-size:9px;color:#9ca3af;">Il foglio deve essere condiviso come "chiunque con il link può visualizzare"</span>
 </div>
 <div class="load-msg" id="loadMsg"></div>
 <div class="load-msg" id="loadMsg2"></div>
@@ -173,6 +182,8 @@ select:focus{border-color:#3b82f6;box-shadow:0 0 0 2px rgba(59,130,246,.12);}
       <div class="stl">📈 Curva di Pareto — quali pesci generano l'80% del fatturato</div>
       <div style="font-size:10px;color:#9ca3af;margin-bottom:8px;">Pesci ordinati per fatturato lordo decrescente. Barre blu = pesci nell'80% del fatturato, grigie = resto. Linea arancione = % cumulata. Soglia rossa = 80%.</div>
       <div style="overflow-x:auto;"><div style="position:relative;height:300px;" id="paretoWrap"><canvas id="paretoChart"></canvas></div></div>
+      <div style="font-size:10px;color:#9ca3af;margin:10px 0 6px;font-weight:600;">Ordinato per margine netto</div>
+      <div style="overflow-x:auto;"><div style="position:relative;height:300px;" id="paretoNettoWrap"><canvas id="paretoNettoChart"></canvas></div></div>
     </div>
     <div class="card">
       <div class="stl">💧 Waterfall — dove spariscono i soldi (Fish Record)</div>
@@ -183,6 +194,8 @@ select:focus{border-color:#3b82f6;box-shadow:0 0 0 2px rgba(59,130,246,.12);}
       <div class="stl">🌡️ Heatmap — incasso medio per giorno × tipo pesce</div>
       <div style="font-size:10px;color:#9ca3af;margin-bottom:8px;">Righe = giorni della settimana, colonne = pesci. Verde = incasso alto, arancione = medio, rosso = basso. Pianifica gli ordini per giorno ottimale.</div>
       <div style="overflow-x:auto;"><div id="heatmapWrap"></div></div>
+      <div style="font-size:10px;color:#9ca3af;margin:10px 0 6px;font-weight:600;">Ordinata per margine netto</div>
+      <div style="overflow-x:auto;"><div id="heatmapNettoWrap"></div></div>
     </div>
     <div class="card">
       <div class="stl">☀️ Impatto meteo sull'incasso medio giornaliero</div>

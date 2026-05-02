@@ -1248,20 +1248,19 @@ function renderActualWoW(fishPeriods,actPeriods){
     crossCard(fCur,aCur);
 }
 
-let WFALL_ACT=null;
+let WFALL_ACT=null,PARETO_NETTO=null;
 function renderWaterfallActual(totFish,totAct){
   const canvas=document.getElementById('waterfallActual');
   if(!canvas)return;
   if(WFALL_ACT)WFALL_ACT.destroy();
+  // Solo dati Dataset 2 (actual)
+  if(!totAct||totAct.entrata===0)return;
   const steps=[
-    {l:'Incasso lordo\n(Fish)',v:totFish.il,start:0,end:totFish.il,color:'rgba(59,130,246,.6)',border:'#3b82f6'},
-    {l:'Incasso lordo\n(Actual)',v:totAct.entrata,start:0,end:totAct.entrata,color:'rgba(16,185,129,.6)',border:'#10b981'},
-    {l:'- Spese Fish\n(Qa×Pa)',v:-totFish.sp,start:totFish.il-totFish.sp,end:totFish.il,color:'rgba(239,68,68,.5)',border:'#ef4444'},
-    {l:'- Fornitori\n(Actual)',v:-totAct.forn,start:totAct.entrata-totAct.forn,end:totAct.entrata,color:'rgba(245,158,11,.5)',border:'#f59e0b'},
+    {l:'Entrata\n(cassa)',v:totAct.entrata,start:0,end:totAct.entrata,color:'rgba(16,185,129,.7)',border:'#10b981'},
+    {l:'- Fornitori\npesce',v:-totAct.forn,start:totAct.entrata-totAct.forn,end:totAct.entrata,color:'rgba(239,68,68,.5)',border:'#ef4444'},
     {l:'- Benzina',v:-totAct.benz,start:totAct.entrata-totAct.forn-totAct.benz,end:totAct.entrata-totAct.forn,color:'rgba(239,68,68,.3)',border:'#ef4444'},
     {l:'- Altro',v:-totAct.altro,start:totAct.entrata-totAct.forn-totAct.benz-totAct.altro,end:totAct.entrata-totAct.forn-totAct.benz,color:'rgba(156,163,175,.4)',border:'#9ca3af'},
-    {l:'= Netto Fish',v:totFish.inn,start:0,end:totFish.inn,color:totFish.inn>=0?'rgba(59,130,246,.7)':'rgba(239,68,68,.7)',border:totFish.inn>=0?'#3b82f6':'#ef4444'},
-    {l:'= Netto Actual\n(tutto)',v:totAct.netto_full,start:0,end:totAct.netto_full,color:totAct.netto_full>=0?'rgba(16,185,129,.7)':'rgba(239,68,68,.7)',border:totAct.netto_full>=0?'#10b981':'#ef4444'},
+    {l:'= Netto\n(tutto)',v:totAct.netto_full,start:0,end:totAct.netto_full,color:totAct.netto_full>=0?'rgba(16,185,129,.8)':'rgba(239,68,68,.8)',border:totAct.netto_full>=0?'#10b981':'#ef4444'},
   ];
   const floatData=steps.map(s=>[Math.min(s.start,s.end),Math.max(s.start,s.end)]);
   const labelPlugin={id:'wfActLabel',afterDatasetsDraw(chart){
@@ -1269,19 +1268,22 @@ function renderWaterfallActual(totFish,totAct){
     ctx2.save();ctx2.font='bold 9px sans-serif';ctx2.textAlign='center';
     meta.data.forEach((bar,i)=>{
       const s=steps[i];const v=Math.round(s.v);
+      const pct=totAct.entrata>0?Math.round(s.v/totAct.entrata*100):0;
       const sign=v>=0?'+':'';
       ctx2.fillStyle=v>=0?'#10b981':'#ef4444';
       const top=Math.min(bar.y,bar.base);
       ctx2.textBaseline='bottom';
-      ctx2.fillText(sign+'\u20ac'+Math.abs(v).toLocaleString('it-IT'),bar.x,top-2);
+      ctx2.fillText(sign+'\u20ac'+Math.abs(v).toLocaleString('it-IT')+' ('+sign+pct+'%)',bar.x,top-2);
     });
     ctx2.restore();
   }};
   WFALL_ACT=new Chart(canvas,{type:'bar',plugins:[labelPlugin],
     data:{labels:steps.map(s=>s.l),datasets:[{label:'Valore',data:floatData,
       backgroundColor:steps.map(s=>s.color),borderColor:steps.map(s=>s.border),borderWidth:1,borderRadius:3}]},
-    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:20}},
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>'Valore: \u20ac'+Math.round(steps[ctx.dataIndex].v).toLocaleString('it-IT')}}},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:24}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{
+        label:ctx=>{const s=steps[ctx.dataIndex];const pct=totAct.entrata>0?(s.v/totAct.entrata*100).toFixed(1):'0';return s.l.replace('\n',' ')+': \u20ac'+Math.round(s.v).toLocaleString('it-IT')+' ('+pct+'%)';}
+      }}},
       scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:9},callback:v=>v>=1000?'\u20ac'+(v/1000).toFixed(0)+'k':'\u20ac'+v}}}
     }
   });
@@ -1865,75 +1867,54 @@ function renderPrePost(){
 let PARETO=null,WATERFALL=null,METEO=null;
 
 // ── Pareto — fixed ───────────────────────────────────────────
-function renderPareto(a){
-  const wrap=document.getElementById('paretoWrap');
-  const canvas=document.getElementById('paretoChart');
-  if(!wrap||!canvas)return;
-  if(PARETO)PARETO.destroy();
-  if(!a||!a.fish.length)return;
-  const fish=[...a.fish].sort((a,b)=>b.il-a.il);
-  const totIl=fish.reduce((s,f)=>s+f.il,0);
-  if(totIl===0)return;
+function buildParetoChart(canvasId,wrapId,fish,metricFn,label){
+  const wrap=document.getElementById(wrapId);
+  const canvas=document.getElementById(canvasId);
+  if(!wrap||!canvas||!fish.length)return null;
+  const sorted=[...fish].sort((a,b)=>metricFn(b)-metricFn(a));
+  const tot=sorted.reduce((s,f)=>s+metricFn(f),0);
+  if(tot===0)return null;
   let cum=0;
-  const cumPct=fish.map(f=>{cum+=f.il;return+(cum/totIl*100).toFixed(1);});
-  // Dimensioni responsive: min 600px, 28px per barra
-  const minW=Math.max(600,fish.length*28+80);
-  wrap.style.width=minW+'px';
-  wrap.style.height='300px';
+  const cumPct=sorted.map(f=>{cum+=metricFn(f);return+(cum/tot*100).toFixed(1);});
+  const minW=Math.max(600,sorted.length*28+80);
+  wrap.style.width=minW+'px';wrap.style.height='300px';
   canvas.width=minW;canvas.height=300;
   canvas.style.width=minW+'px';canvas.style.height='300px';
-  PARETO=new Chart(canvas,{
-    type:'bar',
-    data:{
-      labels:fish.map(f=>f.n),
-      datasets:[
-        {
-          label:'Incasso lordo',
-          data:fish.map(f=>Math.round(f.il)),
-          backgroundColor:fish.map((_,i)=>cumPct[i]<=80?'rgba(59,130,246,.75)':'rgba(156,163,175,.4)'),
-          borderColor:fish.map((_,i)=>cumPct[i]<=80?'#3b82f6':'#9ca3af'),
-          borderWidth:1,borderRadius:3,order:2,yAxisID:'y'
-        },
-        {
-          label:'% cumulata',
-          data:cumPct,
-          type:'line',borderColor:'#f59e0b',backgroundColor:'transparent',
-          borderWidth:2,pointRadius:2,pointBackgroundColor:'#f59e0b',
-          fill:false,tension:.2,order:1,yAxisID:'y2'
-        },
-        {
-          label:'Soglia 80%',
-          data:fish.map(()=>80),
-          type:'line',borderColor:'#ef4444',backgroundColor:'transparent',
-          borderWidth:1,borderDash:[5,4],pointRadius:0,fill:false,order:0,yAxisID:'y2'
+  const ch=new Chart(canvas,{type:'bar',
+    data:{labels:sorted.map(f=>f.n),datasets:[
+      {label:label,data:sorted.map(f=>Math.round(metricFn(f))),
+        backgroundColor:sorted.map((_,i)=>cumPct[i]<=80?'rgba(59,130,246,.75)':'rgba(156,163,175,.4)'),
+        borderColor:sorted.map((_,i)=>cumPct[i]<=80?'#3b82f6':'#9ca3af'),
+        borderWidth:1,borderRadius:3,order:2,yAxisID:'y'},
+      {label:'% cumulata',data:cumPct,type:'line',borderColor:'#f59e0b',backgroundColor:'transparent',
+        borderWidth:2,pointRadius:2,pointBackgroundColor:'#f59e0b',fill:false,tension:.2,order:1,yAxisID:'y2'},
+      {label:'Soglia 80%',data:sorted.map(()=>80),type:'line',borderColor:'#ef4444',backgroundColor:'transparent',
+        borderWidth:1,borderDash:[5,4],pointRadius:0,fill:false,order:0,yAxisID:'y2'}
+    ]},
+    options:{responsive:false,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{font:{size:10}}},tooltip:{mode:'index',intersect:false,callbacks:{
+        label:ctx=>{
+          if(ctx.datasetIndex===0)return label+': \u20ac'+ctx.parsed.y.toLocaleString('it-IT');
+          if(ctx.datasetIndex===1)return'Cumulato: '+ctx.parsed.y.toFixed(1)+'%';
+          return'';
         }
-      ]
-    },
-    options:{
-      responsive:false,maintainAspectRatio:false,
-      plugins:{
-        legend:{position:'top',labels:{font:{size:10}}},
-        tooltip:{mode:'index',intersect:false,callbacks:{
-          label:ctx=>{
-            if(ctx.datasetIndex===0)return'Lordo: \u20ac'+ctx.parsed.y.toLocaleString('it-IT');
-            if(ctx.datasetIndex===1)return'Cumulato: '+ctx.parsed.y.toFixed(1)+'%';
-            return'';
-          }
-        }}
-      },
+      }}},
       scales:{
         x:{grid:{display:false},ticks:{font:{size:9},maxRotation:60,minRotation:45}},
-        y:{
-          position:'left',grid:{color:'rgba(0,0,0,.04)'},
-          ticks:{font:{size:9},callback:v=>v>=1000?'\u20ac'+(v/1000).toFixed(0)+'k':'\u20ac'+v}
-        },
-        y2:{
-          position:'right',grid:{display:false},min:0,max:100,
-          ticks:{font:{size:9},callback:v=>v+'%'}
-        }
+        y:{position:'left',grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:9},callback:v=>v>=1000?'\u20ac'+(v/1000).toFixed(0)+'k':'\u20ac'+v}},
+        y2:{position:'right',grid:{display:false},min:0,max:100,ticks:{font:{size:9},callback:v=>v+'%'}}
       }
     }
   });
+  return ch;
+}
+
+function renderPareto(a){
+  if(PARETO)PARETO.destroy();
+  if(PARETO_NETTO)PARETO_NETTO.destroy();
+  if(!a||!a.fish.length)return;
+  PARETO=buildParetoChart('paretoChart','paretoWrap',a.fish,f=>f.il,'Incasso lordo');
+  PARETO_NETTO=buildParetoChart('paretoNettoChart','paretoNettoWrap',a.fish.filter(f=>f.inn>0),f=>f.inn,'Margine netto');
 }
 
 // ── Waterfall ────────────────────────────────────────────────
@@ -1941,94 +1922,66 @@ function renderWaterfall(a){
   const canvas=document.getElementById('waterfallChart');
   if(!canvas||!a)return;
   if(WATERFALL)WATERFALL.destroy();
-  // Voci: Incasso lordo → -Scarto → -Rimanenza → -Spese acquisto → = Margine netto
-  const il=a.il,sp=a.sp,sc=a.sc,rim=a.rim,inn=a.inn;
-  const snv=a.snv||0; // valore rimanenza immobilizzato
-  // Waterfall: barre floating [start, end]
+  const il=a.il,sp=a.sp,sc=a.sc,inn=a.inn;
+  const scCost=il>0?sc*(sp/Math.max(a.qv+sc,1)):0;
   const steps=[
     {l:'Incasso lordo',v:il,start:0,end:il,color:'rgba(59,130,246,.7)',border:'#3b82f6'},
     {l:'- Spese acquisto',v:-sp,start:il-sp,end:il,color:'rgba(239,68,68,.6)',border:'#ef4444'},
-    {l:'- Scarto (stima)',v:-(sc*(sp/Math.max(a.qv+sc,1))),start:0,end:0,color:'rgba(245,158,11,.6)',border:'#f59e0b'},
+    {l:'- Scarto (stima)',v:-scCost,start:il-sp-scCost,end:il-sp,color:'rgba(245,158,11,.6)',border:'#f59e0b'},
     {l:'= Margine netto',v:inn,start:0,end:inn,color:inn>=0?'rgba(16,185,129,.7)':'rgba(239,68,68,.7)',border:inn>=0?'#10b981':'#ef4444'},
   ];
-  // Ricalcola start per scarto
-  steps[2].start=inn;steps[2].end=inn+(steps[2].v);
-  const labels=steps.map(s=>s.l);
-  // Floating bar: dataset con [min,max]
   const floatData=steps.map(s=>[Math.min(s.start,s.end),Math.max(s.start,s.end)]);
-  WATERFALL=new Chart(canvas,{type:'bar',
-    data:{labels,datasets:[{
-      label:'Valore',data:floatData,
-      backgroundColor:steps.map(s=>s.color),
-      borderColor:steps.map(s=>s.border),
-      borderWidth:1,borderRadius:4,
-      // Aggiungi label valore
-    }]},
-    options:{responsive:true,maintainAspectRatio:false,
+  const wfPlugin={id:'wfLabel',afterDatasetsDraw(chart){
+    const ctx2=chart.ctx;const meta=chart.getDatasetMeta(0);
+    ctx2.save();ctx2.font='bold 10px sans-serif';ctx2.textAlign='center';
+    meta.data.forEach((bar,i)=>{
+      const s=steps[i];const v=Math.round(s.v);
+      const pct=il>0?Math.round(s.v/il*100):0;
+      const sign=v>=0?'+':'';
+      ctx2.fillStyle=v>=0?'#10b981':'#ef4444';
+      const top=Math.min(bar.y,bar.base);
+      ctx2.textBaseline='bottom';
+      ctx2.fillText(sign+'\u20ac'+Math.abs(v).toLocaleString('it-IT')+' ('+sign+pct+'%)',bar.x,top-3);
+    });
+    ctx2.restore();
+  }};
+  WATERFALL=new Chart(canvas,{type:'bar',plugins:[wfPlugin],
+    data:{labels:steps.map(s=>s.l),datasets:[{label:'Valore',data:floatData,
+      backgroundColor:steps.map(s=>s.color),borderColor:steps.map(s=>s.border),borderWidth:1,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:24}},
       plugins:{legend:{display:false},tooltip:{callbacks:{
-        label:ctx=>{const s=steps[ctx.dataIndex];return s.l+': \u20ac'+Math.round(s.v).toLocaleString('it-IT');}
-      }},
-      // Plugin per label sopra/sotto le barre
-      afterDatasetsDraw:(chart)=>{
-        const ctx2=chart.ctx;const meta=chart.getDatasetMeta(0);
-        ctx2.save();ctx2.font='bold 10px sans-serif';ctx2.textAlign='center';
-        meta.data.forEach((bar,i)=>{
-          const s=steps[i];const v=Math.round(s.v);
-          const sign=v>=0?'+':'';
-          ctx2.fillStyle=v>=0?'#10b981':'#ef4444';
-          ctx2.textBaseline=v>=0?'bottom':'top';
-          const y=v>=0?Math.min(bar.y,bar.base)-3:Math.max(bar.y,bar.base)+3;
-          ctx2.fillText(sign+'\u20ac'+Math.abs(v).toLocaleString('it-IT'),bar.x,y);
-        });
-        ctx2.restore();
-      }},
-      scales:{
-        x:{grid:{display:false},ticks:{font:{size:10}}},
-        y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:9},callback:v=>v>=1000?'\u20ac'+(v/1000).toFixed(0)+'k':'\u20ac'+v}}
-      }
+        label:ctx=>{const s=steps[ctx.dataIndex];const pct=il>0?(s.v/il*100).toFixed(1):'0';return s.l+': \u20ac'+Math.round(s.v).toLocaleString('it-IT')+' ('+pct+'% del lordo)';}
+      }}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:9},callback:v=>v>=1000?'\u20ac'+(v/1000).toFixed(0)+'k':'\u20ac'+v}}}
     }
   });
 }
 
 // ── Heatmap giorno × pesce (righe=giorni, colonne=pesci) ─────
-function renderHeatmap(data){
-  const wrap=document.getElementById('heatmapWrap');
+function buildHeatmap(wrapId,data,metricFn,metricLabel){
+  const wrap=document.getElementById(wrapId);
   if(!wrap||!data.length){if(wrap)wrap.innerHTML='';return;}
   const DN_ROWS=['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
   const dnIdx=[1,2,3,4,5,6,0];
-  // Tutti i pesci presenti nel periodo
   const allFish=[...new Set(data.map(r=>r.psc))].sort();
-  // Matrice: giorno × pesce → incasso medio per giornata
-  const mat={};
-  const dayCnt={};
+  const mat={};const dayCnt={};
   data.forEach(r=>{
     const dn=r.date.getDay();
     const k=dn+'|'+r.psc;
-    if(!mat[k])mat[k]=0;mat[k]+=r.il;
+    if(!mat[k])mat[k]=0;mat[k]+=metricFn(r);
     if(!dayCnt[dn])dayCnt[dn]=new Set();
     dayCnt[dn].add(r.date.toISOString().slice(0,10));
   });
-  // Valori per normalizzazione
   const vals=[];
   dnIdx.forEach(dn=>allFish.forEach(f=>{
     const k=dn+'|'+f;const cnt=dayCnt[dn]?.size||1;
     vals.push(mat[k]?mat[k]/cnt:0);
   }));
   const maxV=Math.max(...vals,1);
-  // Colore tricolore: 0=rosso, 0.5=arancione, 1=verde
   function heatColor(v){
     const t=v/maxV;
-    if(t<0.5){
-      // rosso → arancione
-      const s=t*2;
-      const r=239,g=Math.round(68+(158-68)*s),b=Math.round(68+(11-68)*s);
-      return`rgb(${r},${g},${b})`;
-    } else {
-      // arancione → verde
-      const s=(t-0.5)*2;
-      const r=Math.round(245+(16-245)*s),g=Math.round(158+(185-158)*s),b=Math.round(11+(129-11)*s);
-      return`rgb(${r},${g},${b})`;
-    }
+    if(t<0.5){const s=t*2;return`rgb(239,${Math.round(68+(158-68)*s)},${Math.round(68+(11-68)*s)})`;}
+    else{const s=(t-0.5)*2;return`rgb(${Math.round(245+(16-245)*s)},${Math.round(158+(185-158)*s)},${Math.round(11+(129-11)*s)})`;}
   }
   function textColor(t){return t>0.45?'#fff':'#1a1a1a';}
   let html='<table class="hm-table"><thead><tr>'+
@@ -2049,6 +2002,11 @@ function renderHeatmap(data){
   });
   html+='</tbody></table>';
   wrap.innerHTML=html;
+}
+
+function renderHeatmap(data){
+  buildHeatmap('heatmapWrap',data,r=>r.il,'Incasso lordo');
+  buildHeatmap('heatmapNettoWrap',data,r=>Math.max(0,r.inn),'Margine netto');
 }
 
 // ── Impatto meteo ────────────────────────────────────────────
@@ -2242,6 +2200,35 @@ document.getElementById('csvIn').addEventListener('change',e=>{
   const f=e.target.files[0];if(!f)return;
   const rd=new FileReader();rd.onload=ev=>loadData(ev.target.result);rd.readAsText(f,'UTF-8');
 });
+// ── Google Sheets loader ─────────────────────────────────────
+function loadFromGoogleSheets(){
+  const url1=(document.getElementById('gsUrl1')?.value||'').trim();
+  const url2=(document.getElementById('gsUrl2')?.value||'').trim();
+  if(!url1&&!url2){alert('Inserisci almeno un URL Google Sheets');return;}
+  const msg=document.getElementById('loadMsg');
+  if(url1){
+    msg.textContent='Caricamento da Google Sheets...';
+    fetch(url1)
+      .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status+' — verifica che il foglio sia pubblico');return r.text();})
+      .then(loadData)
+      .catch(e=>{msg.innerHTML='<span style="color:#ef4444;">Errore DS1: '+e.message+'</span>';});
+  }
+  if(url2){
+    const msg2=document.getElementById('loadMsg2');
+    msg2.textContent='Caricamento Actual da Google Sheets...';
+    fetch(url2)
+      .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.text();})
+      .then(text=>{
+        RAW2=buildFromCSV2(text);
+        if(!RAW2.length){msg2.textContent='Nessuna riga valida nel Dataset 2.';return;}
+        msg2.innerHTML='<span style="color:#166534;background:#f0fdf4;padding:2px 8px;border-radius:4px;">Actual caricato da Sheets: '+RAW2.length+' righe</span>';
+        const sec=document.getElementById('actualSection');if(sec)sec.style.display='';
+        populateActualFilters();if(RAW2.length)renderActual();
+      })
+      .catch(e=>{msg2.innerHTML='<span style="color:#ef4444;">Errore DS2: '+e.message+'</span>';});
+  }
+}
+
 (function autoLoad(){
   const fname='Pescheria - Abasci\u00e0 Excel - Lavoro - Dataset Pesce.csv';
   document.getElementById('loadMsg').textContent='Caricamento CSV in corso...';
