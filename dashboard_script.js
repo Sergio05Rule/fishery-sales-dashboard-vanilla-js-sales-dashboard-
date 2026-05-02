@@ -966,11 +966,34 @@ function renderRawTable(data){
       return rawSortAsc?va-vb:vb-va;
     });
   }
+  // Calcola totali per le colonne numeriche
+  const totQa=data.reduce((s,r)=>s+r.qa,0);
+  const totQv=data.reduce((s,r)=>s+r.qv,0);
+  const totSp=data.reduce((s,r)=>s+r.sp,0);
+  const totIl=data.reduce((s,r)=>s+r.il,0);
+  const totInn=data.reduce((s,r)=>s+r.inn,0);
+  const totMp=totIl>0?totInn/totIl*100:0;
+  const totRim=data.reduce((s,r)=>s+r.rim,0);
+  const ts='font-weight:700;color:#374151;background:#f9fafb;';
+  const totRow='<tr style="border-bottom:2px solid #e5e7eb;">'+
+    '<td style="'+ts+'font-size:10px;">Totale ('+data.length+' righe)</td>'+
+    '<td style="'+ts+'">—</td>'+ // pescheria
+    '<td style="'+ts+'">—</td>'+ // pesce
+    '<td style="'+ts+'">—</td>'+ // fornitore
+    '<td style="'+ts+'">—</td>'+ // categoria
+    '<td style="'+ts+'">'+totQa.toFixed(1)+'</td>'+
+    '<td style="'+ts+'">'+totQv.toFixed(1)+'</td>'+
+    '<td style="'+ts+'">'+fmt(totSp,0,'\u20ac ')+'</td>'+
+    '<td style="'+ts+'">'+fmt(totIl,0,'\u20ac ')+'</td>'+
+    '<td style="'+ts+';color:'+(totInn>=0?'#10b981':'#ef4444')+';">'+fmt(totInn,0,'\u20ac ')+'</td>'+
+    '<td style="'+ts+';color:'+mpColor(totMp)+';">'+totMp.toFixed(1)+'%</td>'+
+    '<td style="'+ts+'">'+totRim.toFixed(1)+'</td>'+
+  '</tr>';
   const thead='<thead><tr>'+cols.map((c,i)=>{
     const sorted=rawSortCol===i;
     const arrow=sorted?(rawSortAsc?'\u25B2':'\u25BC'):'\u25B4';
     return'<th class="'+(sorted?'sorted':'')+'" data-rci="'+i+'">'+c.label+' <span class="arrow">'+arrow+'</span></th>';
-  }).join('')+'</tr></thead>';
+  }).join('')+'</tr>'+totRow+'</thead>';
   const tbody='<tbody>'+rows.map(r=>'<tr>'+cols.map(c=>'<td>'+c.fmt(r)+'</td>').join('')+'</tr>').join('')+'</tbody>';
   el.innerHTML=thead+tbody;
   el.querySelectorAll('th').forEach(th=>{
