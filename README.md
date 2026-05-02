@@ -163,7 +163,7 @@ Rows with identical keys are dropped at parse time. The source file is never mod
 
 ### 2. Fish name normalization
 
-82 raw variants → 48 canonical names via `FISH_NORM()`. Normalization runs before deduplication.
+90+ raw variants → 51 canonical names via `FISH_NORM()`. Normalization runs before deduplication.
 
 See the full mapping table in the **[Fish name normalization](#2-fish-name-normalization)** section below.
 
@@ -203,7 +203,7 @@ Schedule change:
 
 ## Fish name normalization
 
-### Explicit normalization map (82 variants → 48 canonical names)
+### Explicit normalization map (90+ variants → 51 canonical names)
 
 | Raw variants in CSV | Canonical name |
 |--------------------|----------------|
@@ -211,6 +211,7 @@ Schedule change:
 | `Cozza grecia`, `Cozze grecia` | `Cozze Grecia` |
 | `Cozza pelosa` | `Cozze Pelosa` |
 | `Cozza sfusa` | `Cozze Sfusa` |
+| `Cozze sfuse` | `Cozze Sfuse` |
 | `Cozza treccia`, `Cozze treccia` | `Cozze Treccia` |
 | `Cozze spagna` | `Cozze Spagna` |
 | `Cozze` | `Cozze` |
@@ -226,13 +227,16 @@ Schedule change:
 | `Pesce spada` | `Pesce Spada` |
 | `Persico`, `Filetto persico` | `Filetto Persico` |
 | `Pescatrice`, `Pescatrici` | `Pescatrice` |
+| `Pescatrice 50/100` | `Pescatrice 50/100` |
 | `Polpi`, `Polpo`, `Polipo` | `Polpo` |
 | `Polpo T7`, `Polpo  T7` | `Polpo T7` |
 | `Polpo T4` | `Polpo T4` |
-| `Polpi t8`, `Polpo t8`, `Polipi t8` | `Polpo T8` |
+| `Polpi t8`, `Polpo t8`, `Polipi t8`, `Polipo t8` | `Polpo T8` |
 | `Raia`, `Raya`, `Razza` | `Razza` |
+| `Razza pulita` | `Razza Pulita` |
 | `Sarde` | `Sarde` |
 | `Scampi` | `Scampi` |
+| `Sfusa grecia` | `Sfusa Grecia` |
 | `Seppia`, `Seppie` | `Seppia` |
 | `Seppia 10/20`, `Seppie 10/20`, `Seppia pulita 10/20`, `Seppie pulite 10/20` | `Seppia Pulita 10/20` |
 | `Seppia cioco`, `Seppie cioco` | `Seppia Cioco` |
@@ -244,19 +248,21 @@ Schedule change:
 | `Sogliola` | `Sogliola` |
 | `Sogliola (lingua)` | `Sogliola Lingua` |
 | `Sogliola tigri`, `Sogliole tigri`, `Sogliola(TIgri)`, `Sogliola (tigri)` | `Sogliola Tigri` |
+| `Sogliola tigre` | `Sogliola Tigre` |
 | `Spigola`, `Spigole`, `Spigola a` | `Spigola A` |
 | `Spigola g`, `Spigole g` | `Spigola G` |
 | `Spigole 2g` | `Spigole 2G` |
 | `Spigole 3g` | `Spigole 3G` |
 | `Baccala Congelato` | `Baccalà Congelato` |
 | `Baccalà salato` | `Baccalà Salato` |
-| `Vongole`, `Vongole v.` | `Vongole Veraci` |
+| `Vongole`, `Vongole v.`, `Vongole veraci` | `Vongole Veraci` |
+| `Vongole lupini` | `Vongole Lupini` |
 | `Lupini mega` | `Lupini Mega` |
 | `Lupini` | `Lupini` |
 
 ### Passthrough names (title-case fallback, no explicit mapping needed)
 
-Alici · Anguille · Astice · Calamari · Cefalo · Cicala · Datterino · Filetto Ricomposto · Gallinella · Lanzardo · Melù · Noci Bianche · Obrina · Ostriche · Palombo · Paranza · Ricciola · Ricomposto · Salmone · Sbani · Serra · Sgombro · Suri · Tonno · Triglie · Trote Salmonate · Violette
+Alici · Anguille · Astice · Calamari · Cefalo · Cicala · Datterino · Filetto Ricomposto · Gallinella · Lanzardo · Melù · Noci Bianche · Obrina · Ostriche · Palombo · Paranza · Ricciola · Ricomposto · Salmone · Sbani · Serra · Sgombro · Suri · Tonno · Triglie · Trote Salmonate · Violette · Scampi
 
 ---
 

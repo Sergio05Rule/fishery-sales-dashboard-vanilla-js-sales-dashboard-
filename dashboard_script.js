@@ -21,7 +21,8 @@ const FISH_NORM=(function(){
     'coda di rospo':'Coda di Rospo','code di rospo':'Coda di Rospo',
     // Cozze
     'cozza grecia':'Cozze Grecia','cozze grecia':'Cozze Grecia',
-    'cozza pelosa':'Cozze Pelosa','cozza sfusa':'Cozze Sfusa','cozza treccia':'Cozze Treccia','cozze treccia':'Cozze Treccia',
+    'cozza pelosa':'Cozze Pelosa','cozza sfusa':'Cozze Sfusa','cozze sfuse':'Cozze Sfuse',
+    'cozza treccia':'Cozze Treccia','cozze treccia':'Cozze Treccia',
     'cozze spagna':'Cozze Spagna','cozze':'Cozze',
     // Gamberi
     'gamberi 20/30':'Gamberi 20/30','gamberi salipci':'Gamberi Salipci',
@@ -41,16 +42,17 @@ const FISH_NORM=(function(){
     // Pesce spada
     'pesce spada':'Pesce Spada',
     // Pescatrice
-    'pescatrici':'Pescatrice','pescatrice':'Pescatrice',
+    'pescatrici':'Pescatrice','pescatrice':'Pescatrice','pescatrice 50/100':'Pescatrice 50/100',
     'polpo t7':'Polpo T7','polpo  t7':'Polpo T7','polpo t4':'Polpo T4',
-    'polpo t8':'Polpo T8','polpi t8':'Polpo T8','polipi t8':'Polpo T8',
+    'polpo t8':'Polpo T8','polpi t8':'Polpo T8','polipi t8':'Polpo T8','polipo t8':'Polpo T8',
     // Polpo / Polpi / Polipo → Polpo
     'polpo':'Polpo','polpi':'Polpo','polipo':'Polpo',
     // Raia / Raya / Razza
-    'raia':'Razza','raya':'Razza','razza':'Razza',
+    'raia':'Razza','raya':'Razza','razza':'Razza','razza pulita':'Razza Pulita',
+    // Scampi
+    'scampi':'Scampi',
     // Sarde
     'sarde':'Sarde',
-    // Seppia / Seppie — tutte Seppia (singolare canonico)
     'seppia':'Seppia','seppie':'Seppia',
     'seppia 10/20':'Seppia Pulita 10/20','seppia cioco':'Seppia Cioco',
     'seppia pulita':'Seppia Pulita','seppia pulita 10/20':'Seppia Pulita 10/20',
@@ -65,6 +67,7 @@ const FISH_NORM=(function(){
     'sogliola':'Sogliola','sogliola (lingua)':'Sogliola Lingua',
     'sogliola (tigri)':'Sogliola Tigri','sogliola tigri':'Sogliola Tigri',
     'sogliola(tigri)':'Sogliola Tigri','sogliole tigri':'Sogliola Tigri',
+    'sogliola tigre':'Sogliola Tigre',
     // Spigola / Spigole
     'spigola':'Spigola A','spigola a':'Spigola A','spigole':'Spigola A',
     'spigola g':'Spigola G','spigole g':'Spigola G',
@@ -73,6 +76,9 @@ const FISH_NORM=(function(){
     'baccala congelato':'Baccalà Congelato','baccalà salato':'Baccalà Salato',
     // Vongole
     'vongole':'Vongole Veraci','vongole lupini':'Vongole Lupini','vongole v.':'Vongole Veraci',
+    'vongole veraci':'Vongole Veraci',
+    // Sfusa grecia (cozze sfuse dalla Grecia)
+    'sfusa grecia':'Sfusa Grecia',
     // Lupini
     'lupini mega':'Lupini Mega','lupini':'Lupini',
   };
