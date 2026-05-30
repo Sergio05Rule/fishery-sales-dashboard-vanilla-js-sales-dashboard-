@@ -21,7 +21,7 @@ const FISH_NORM=(function(){
     'coda di rospo':'Coda di Rospo','code di rospo':'Coda di Rospo',
     // Cozze
     'cozza grecia':'Cozze Grecia','cozze grecia':'Cozze Grecia',
-    'cozza pelosa':'Cozze Pelosa','cozza sfusa':'Cozze Sfusa','cozze sfuse':'Cozze Sfuse',
+    'cozza pelosa':'Cozze Pelosa','cozza sfusa':'Cozze Sfusa','cozze sfuse':'Cozze Sfusa',
     'cozza treccia':'Cozze Treccia','cozze treccia':'Cozze Treccia',
     'cozze spagna':'Cozze Spagna','cozze':'Cozze',
     // Gamberi
@@ -57,7 +57,7 @@ const FISH_NORM=(function(){
     'seppia 10/20':'Seppia Pulita 10/20','seppia cioco':'Seppia Cioco',
     'seppia pulita':'Seppia Pulita','seppia pulita 10/20':'Seppia Pulita 10/20',
     'seppia sporca':'Seppia Sporca',
-    'seppie 10/20':'Seppia Pulita 10/20','seppie 20/40':'Seppie 20/40',
+    'seppie 10/20':'Seppia Pulita 10/20','seppie 20/40':'Seppia 20/40',
     'seppie cioco':'Seppia Cioco','seppie pulita':'Seppia Pulita',
     'seppie pulita gold':'Seppia Pulita Gold','seppie pulite':'Seppia Pulita',
     'seppie pulite 10/20':'Seppia Pulita 10/20',
@@ -65,13 +65,13 @@ const FISH_NORM=(function(){
     'ombrina':'Ombrina','ombrine':'Ombrina',
     // Sogliola
     'sogliola':'Sogliola','sogliola (lingua)':'Sogliola Lingua',
-    'sogliola (tigri)':'Sogliola Tigri','sogliola tigri':'Sogliola Tigri',
-    'sogliola(tigri)':'Sogliola Tigri','sogliole tigri':'Sogliola Tigri',
+    'sogliola (tigri)':'Sogliola Tigre','sogliola tigri':'Sogliola Tigre',
+    'sogliola(tigri)':'Sogliola Tigre','sogliole tigri':'Sogliola Tigre',
     'sogliola tigre':'Sogliola Tigre',
     // Spigola / Spigole
     'spigola':'Spigola A','spigola a':'Spigola A','spigole':'Spigola A',
     'spigola g':'Spigola G','spigole g':'Spigola G',
-    'spigole 2g':'Spigole 2G','spigole 3g':'Spigole 3G',
+    'spigole 2g':'Spigola 2G','spigole 3g':'Spigola 3G',
     // Baccalà
     'baccala congelato':'Baccalà Congelato','baccalà salato':'Baccalà Salato',
     // Vongole

@@ -210,8 +210,7 @@ Schedule change:
 | `Coda di rospo`, `Code di rospo` | `Coda di Rospo` |
 | `Cozza grecia`, `Cozze grecia` | `Cozze Grecia` |
 | `Cozza pelosa` | `Cozze Pelosa` |
-| `Cozza sfusa` | `Cozze Sfusa` |
-| `Cozze sfuse` | `Cozze Sfuse` |
+| `Cozza sfusa`, `Cozze sfuse` | `Cozze Sfusa` |
 | `Cozza treccia`, `Cozze treccia` | `Cozze Treccia` |
 | `Cozze spagna` | `Cozze Spagna` |
 | `Cozze` | `Cozze` |
@@ -242,17 +241,16 @@ Schedule change:
 | `Seppia cioco`, `Seppie cioco` | `Seppia Cioco` |
 | `Seppia pulita`, `Seppie pulita`, `Seppie pulite` | `Seppia Pulita` |
 | `Seppia sporca` | `Seppia Sporca` |
-| `Seppie 20/40` | `Seppie 20/40` |
+| `Seppie 20/40` | `Seppia 20/40` |
 | `Seppie pulita gold` | `Seppia Pulita Gold` |
 | `Ombrina`, `Ombrine` | `Ombrina` |
 | `Sogliola` | `Sogliola` |
 | `Sogliola (lingua)` | `Sogliola Lingua` |
-| `Sogliola tigri`, `Sogliole tigri`, `Sogliola(TIgri)`, `Sogliola (tigri)` | `Sogliola Tigri` |
-| `Sogliola tigre` | `Sogliola Tigre` |
+| `Sogliola tigri`, `Sogliole tigri`, `Sogliola(TIgri)`, `Sogliola (tigri)`, `Sogliola tigre` | `Sogliola Tigre` |
 | `Spigola`, `Spigole`, `Spigola a` | `Spigola A` |
 | `Spigola g`, `Spigole g` | `Spigola G` |
-| `Spigole 2g` | `Spigole 2G` |
-| `Spigole 3g` | `Spigole 3G` |
+| `Spigole 2g` | `Spigola 2G` |
+| `Spigole 3g` | `Spigola 3G` |
 | `Baccala Congelato` | `Baccalà Congelato` |
 | `Baccalà salato` | `Baccalà Salato` |
 | `Vongole`, `Vongole v.`, `Vongole veraci` | `Vongole Veraci` |
